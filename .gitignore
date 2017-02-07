@@ -1,0 +1,7 @@
+/Firmware/*.bin
+*.sqlite3
+*.bin
+*.txt
+*.DS_Store
+*.zip
+
