@@ -8,16 +8,16 @@ et sélectionner un "device" à programmer.
 
 Chaque configuration correspond à une combinaison des senseurs et/ou fonctions suivantes:
 
-| Senseurs/fonctions | Valeur          |
-| ------------------ |:---------------:|
-| DISTANCESENSOR:    | US100 ou MB7389 |
-| PUMPMOTORDETECT    | true / false    |
-| HASDS18B20SENSOR   | true / false    |
-| HASHEATING         | true / false    |
-| HASVACUUMSENSOR    | true / false    |
-| HASVALVES          | true / false    |
-| HASRELAYOUTPUT     | true / false    |
-
+| Senseurs/fonctions | Valeur                |
+| ------------------ |:---------------------:|
+| DISTANCESENSOR:    | US100 / MB7389 / NONE |
+| PUMPMOTORDETECT    | true / false          |
+| HASDS18B20SENSOR   | true / false          |
+| HASHEATING         | true / false          |
+| HASVACUUMSENSOR    | true / false          |
+| HASVALVES          | true / false          |
+| HASRELAYOUTPUT     | true / false          |
+| HASUS100THERMISTOR | true / false          |
 
 Les _configurations_ suivantes sont utilisé actuellement.
 
