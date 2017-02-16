@@ -17,7 +17,7 @@ STARTUP(WiFi.selectAntenna(ANT_EXTERNAL));
 STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 
 // Firmware version et date
-#define FirmwareVersion "1.2.3"   // Version du firmware du capteur.
+#define FirmwareVersion "1.2.5"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
@@ -39,10 +39,11 @@ RS1, RS2, RS3, RS4, RF2 -> DEVICE_CONF == 3
 RF1, RC1, RC2 -> DEVICE_CONF == 4
 RS5, RS6 -> DEVICE_CONF == 5
 RHC -> DEVICE_CONF == 6
+VEcTk -> DEVICE_CONF == 7
 */
 
 /********* Choisir la configuration de device à compiler *********/
-#define DEVICE_CONF 4
+#define DEVICE_CONF 3
 /*****************************************************************/
 
 /*Config for P1, P2, P3 -> DEVICE_CONF == 0
@@ -168,6 +169,38 @@ RHC       MB7389          false           true(1)          true       false     
   #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
 
+
+/*Config for VEcTk -> DEVICE_CONF == 6
+DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
+VEcTk     NONE            false           true(1)          true       false           true      false          false
+*/
+#elif (DEVICE_CONF == 7)
+  String config = "7 -> VEcTk";       //String info de configuration
+  #define DISTANCESENSOR NONE         //Pour compilation conditionnelle du serial handler: US100. MB7389, None
+  #define PUMPMOTORDETECT false       //Pour compilation conditionnelle de la routin e d'interruption
+  #define HASDS18B20SENSOR true       //Pour le code spécifique au captgeur de température DS18B20
+  #define HASHEATING true             //Pour le chauffage du boitier
+  #define HASVACUUMSENSOR false       //Un capteur de vide est installé
+  #define HASVALVES true              //Des valves sont relié à ce capteur
+  #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
+  #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
+
+
+/*Config for DummyDevice -> DEVICE_CONF == 8
+DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
+Dummy     NONE            false           false            false      false           true      false          false
+*/
+#elif (DEVICE_CONF == 8)
+  String config = "7 -> VEcTk";       //String info de configuration
+  #define DISTANCESENSOR NONE         //Pour compilation conditionnelle du serial handler: US100. MB7389, None
+  #define PUMPMOTORDETECT false       //Pour compilation conditionnelle de la routin e d'interruption
+  #define HASDS18B20SENSOR false      //Pour le code spécifique au captgeur de température DS18B20
+  #define HASHEATING false            //Pour le chauffage du boitier
+  #define HASVACUUMSENSOR false       //Un capteur de vide est installé
+  #define HASVALVES true              //Des valves sont relié à ce capteur
+  #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
+  #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
+
 #else
   #error Invalid device configuration!
 #endif
@@ -195,13 +228,13 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define minDistChange 2.0 * numReadings      // Minimum change in distance to publish an event (1/16")
 #define minTempChange 0.5 * numReadings      // Minimum temperature change to publish an event
 #define minVacuumChange 0.01 // Changement de 0.01 Po Hg avant publication du niveau de vide
-#define maxRangeUS100 2500 // Distance maximale valide pour le captgeur
+#define maxRangeUS100 3000 // Distance maximale valide pour le captgeur
 #define maxRangeMB7389 1900 // Distance maximale valide pour le captgeur
 #define ONE_WIRE_BUS D4 //senseur sur D4
 #define DallasSensorResolution 9 // Résolution de lecture de température
 #define MaxHeatingPowerPercent 70 // Puissance maximale appliqué sur la résistance de chauffage
 #define HeatingSetPoint 25 // Température cible à l'intérieur du boitier
-#define DefaultPublishDelay 10 // Interval de publication par défaut
+#define DefaultPublishDelay 10 // Interval de publication en minutes par défaut
 #define TimeoutDelay 3 * slowSampling
 
 // Definition for vacuum transducer
@@ -362,7 +395,7 @@ bool connWasLost = false;
 #if DISTANCESENSOR == MB7389
   bool MB7389Valid = false;
   String Dist_MB7389Str;
-  int MB7389latestReading = 0;
+  unsigned int MB7389latestReading = 0;
   const int R = 82;
   const int CR = 13;
 #endif
@@ -400,8 +433,9 @@ class ExternalRGB {
       pin_t pin_b;
 };
 
-    // Connect an external RGB LED to D0, D1 and D2 (R, G, and B)
-    ExternalRGB myRGB(RGBled_Red, RGBled_Green, RGBLed_Blue);
+  // Connect an external RGB LED to D0, D1 and D2 (R, G, and B)
+  ExternalRGB myRGB(RGBled_Red, RGBled_Green, RGBLed_Blue);
+
 
 #if PUMPMOTORDETECT
 /*
@@ -446,13 +480,13 @@ class ExternalRGB {
 void setup() {
   // Initialisation des pin I/O
       pinMode(led, OUTPUT);
+      digitalWrite(led, HIGH); // Mettre le led de status à OFF
       pinMode(ssrRelay, OUTPUT);
       #if HASHEATING
           pinMode(heater, OUTPUT);
           HeatingPower =  256 * MaxHeatingPowerPercent / 100; // Valeur de PWM de chauffage
           analogWrite(heater, HeatingPower); //Désactiver le chauffage
       #endif
-      digitalWrite(led, LOW);
       digitalWrite(ssrRelay, LOW);
 
       PumpCurrentState = digitalRead(A1);
@@ -471,15 +505,16 @@ void setup() {
 
 // connect RX to Echo/Rx (US-100), TX to Trig/Tx (US-100)
     Serial.begin(115200); // Pour débug
-    Serial1.begin(9600);  // Le capteur US-100 fonctionne à 9600 baud
-
+    #if DISTANCESENSOR == MB7389
+        Serial1.begin(9600);  // Le capteur US-100 fonctionne à 9600 baud
+    #endif
 // Enregistrement des fonctions et variables disponible par le nuage
     Serial.println("Enregistrement des variables et fonctions\n");
     Particle.variable("Version", FirmwareVersion);
     Particle.variable("Date", FirmwareDate);
     Particle.variable("config", config);
     Particle.variable("hasDistance", distSensorName);
-    #if (DISTANCESENSOR != NONE)
+    #if (DISTANCESENSOR == US100 || DISTANCESENSOR == MB7389)
       Particle.variable("rawDistance", rawDistmm);
     #endif
     #if (DISTANCESENSOR == US100)
@@ -810,11 +845,11 @@ void readSelectedSensors(int sensorNo) {
 // Cette routine mesure la distance entre la surface de l'eau et le capteur ultason
   void ReadDistance_US100(){
       distSensorName = "US100";
-      int currentReading;
+      unsigned int currentReading;
       Serial.println("Distance meas routine: ReadDistance_US100");
-      Serial1.flush();                                // clear receive buffer of serial port
+      Serial1.begin(9600);  // Le capteur US-100 fonctionne à 9600 baud
       Serial1.write(0X55);                            // trig US-100 begin to measure the distance
-      delay(30UL);                                     // delay 20ms to wait result
+      delay(60UL);                                     // delay 20ms to wait result
       if(Serial1.available() >= 2)                    // when receive 2 bytes
       {
           US100HighByte = Serial1.read();                   // High byte of distance
@@ -843,13 +878,14 @@ void readSelectedSensors(int sensorNo) {
       } else {
           Serial.println("Données non disponible");
       }
+      Serial1.end();  // Le capteur US-100 fonctionne à 9600 baud
   }
 
   // Cette routine lit la température sur le capteur US-100.
   // Note: La valeur 45 DOIT être soustraite pour obtenir la température réelle.
   void Readtemp_US100(){
       int Temp45 = 0;
-      Serial1.flush();                // S'assurer que le buffer du port serie 1 est vide.
+      Serial1.begin(9600);  // Le capteur US-100 fonctionne à 9600 baud
       Serial1.write(0X50);            // Demander la lecture de température sur le US-100 en envoyant 50 (Hex)
       delay(30UL);                   // Attente du résult (20ms)
       if(Serial1.available() >= 1)    // lors de la réception d'au moins 1 bytes
@@ -868,6 +904,7 @@ void readSelectedSensors(int sensorNo) {
                   }
           }
       }
+      Serial1.end();  // Le capteur US-100 fonctionne à 9600 baud
   }
 #endif
 
@@ -876,9 +913,9 @@ void readSelectedSensors(int sensorNo) {
 // Note: La valeur 45 DOIT être soustraite pour obtenir la température réelle.
 void ReadTherm_US100(){
     int Therm45 = 0;
-    Serial1.flush();                // S'assurer que le buffer du port serie 1 est vide.
+    Serial1.begin(9600);  // Le capteur US-100 fonctionne à 9600 baud
     Serial1.write(0X5A);            // Demander la lecture du thermistor sur le boitier US-100 en envoyant 5A (Hex)
-    delay(20UL);                   // Attente du résult
+    delay(30UL);                   // Attente du résult
     if(Serial1.available() >= 1)    // lors de la réception d'au moins 1 bytes
     {
         Therm45 = Serial1.read();     // Lire la température brut
@@ -888,13 +925,14 @@ void ReadTherm_US100(){
             Serial.printlnf("Temp. thermistor: %dC now= %d",  (byte)(Therm45 - 45), now); // Pour debug
         }
     }
+    Serial1.end();  // Le capteur US-100 fonctionne à 9600 baud
 }
 #endif
 
 #if DISTANCESENSOR == MB7389
 // Cette routine mesure la distance entre la surface de l'eau et le capteur ultason
   void ReadDistance_MB7389(){
-      int currentReading = MB7389latestReading;
+      unsigned int currentReading = MB7389latestReading;
       Serial.println("Distance meas routine: ReadDistance_MB7389");
       Serial.printlnf("MB7389latestReading: %d", MB7389latestReading);
       rawDistmm = currentReading;
