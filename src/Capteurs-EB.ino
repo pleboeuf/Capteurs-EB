@@ -17,7 +17,7 @@ STARTUP(WiFi.selectAntenna(ANT_EXTERNAL));
 STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 
 // Firmware version et date
-#define FirmwareVersion "1.2.5"   // Version du firmware du capteur.
+#define FirmwareVersion "1.2.6"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
@@ -43,7 +43,7 @@ VEcTk -> DEVICE_CONF == 7
 */
 
 /********* Choisir la configuration de device à compiler *********/
-#define DEVICE_CONF 3
+#define DEVICE_CONF 7
 /*****************************************************************/
 
 /*Config for P1, P2, P3 -> DEVICE_CONF == 0
@@ -234,7 +234,7 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define DallasSensorResolution 9 // Résolution de lecture de température
 #define MaxHeatingPowerPercent 70 // Puissance maximale appliqué sur la résistance de chauffage
 #define HeatingSetPoint 25 // Température cible à l'intérieur du boitier
-#define DefaultPublishDelay 10 // Interval de publication en minutes par défaut
+#define DefaultPublishDelay 5 // Interval de publication en minutes par défaut
 #define TimeoutDelay 3 * slowSampling
 
 // Definition for vacuum transducer
@@ -264,6 +264,8 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define evHeatingPowerLevel 16
 #define evNewGenSN 17
 #define evBootTimestamp 18
+#define evValve1_Position 19
+#define evValve2_Position 20
 
 // Table des nom d'événements
 String eventName[] = {
@@ -285,7 +287,9 @@ String eventName[] = {
   "sensor/ambientTemp", // Ambient temperature read by remote probe.
   "output/enclosureHeating", // Value of PWM output to heating resistor.
   "device/NewGenSN", // New generation of serial numbers for this device
-  "device/boot" // Device boot or reboot timestamp
+  "device/boot", // Device boot or reboot timestamp
+  "sensor/Valve1Pos", // Valve 1 position string
+  "sensor/Valve2Pos"  // Valve 2 position string
   };
 
 // Structure définissant un événement
@@ -645,7 +649,7 @@ void loop(){
     /*delay(20UL);  // Just to have a visible flash on the LED*/
     digitalWrite(led, HIGH); // Pour indiqué la fin de la prise de mesure
     timeLastUnit = loopTime;
-    Serial.printlnf("*** Loop No. %d end. Loop time is:<<<<< %d >>>>>", samplingIntervalCnt, millis() - loopTime);
+    /*Serial.printlnf("*** Loop No. %d end. Loop time is:<<<<< %d >>>>>", samplingIntervalCnt, millis() - loopTime);*/
     if (samplingIntervalCnt == 5){
       samplingIntervalCnt = 0;
     } else {
@@ -1162,10 +1166,11 @@ Section réservé pour le code de mesure du vide (vacuum)
 
 #if HASVALVES
 // Check the state of the valves position reedswitch
+// when statusAll is true, publish even if there no change in the state
 void CheckValvePos(bool statusAll){
-    bool valveCurrentState;
-    String stateStr;
-
+    bool valveCurrentState = false;
+    String stateStr = "";
+    String positionCode[] = {"Erreur", "Ouverte", "Fermé", "Partiel"};
     for (int i=0; i <= 3; i++) {
         valveCurrentState = digitalRead(ValvePos_pin[i]);
         if ((ValvePos_state[i] != valveCurrentState) || statusAll == true){
@@ -1179,10 +1184,35 @@ void CheckValvePos(bool statusAll){
             } else {
                 stateStr = "/Undefined";
             }
-            Serial.println(DomainName + DeptName + eventName[ValvePos_Name[i]] + ": " + stateStr );
-            pushToPublishQueue(ValvePos_Name[i], valveCurrentState, now);
+            // Now publish the position of the valves
+            if (i <= 1){
+              int Valve1Pos = getValvePosition(ValvePos_state[0], ValvePos_state[1]);
+              pushToPublishQueue(evValve1_Position, Valve1Pos, now);
+              Serial.println(DomainName + DeptName + "Valve 1 position: " + Valve1Pos + ", " + positionCode[Valve1Pos]);
+            } else {
+              int Valve2Pos = getValvePosition(ValvePos_state[2], ValvePos_state[3]);
+              pushToPublishQueue(evValve2_Position, Valve2Pos, now);
+              Serial.println(DomainName + DeptName + "Valve 2 position: " + Valve2Pos + ", " +  positionCode[Valve2Pos]);
+            }
         }
     }
+}
+
+int getValvePosition(bool OpenSensor, bool CloseSensor){
+    int ValvePos;
+    if (OpenSensor == 0 && CloseSensor == 0){
+      ValvePos = 0; // "Erreur". Impossible en fonctionnement normal
+    }
+    if (OpenSensor == 0 && CloseSensor == 1){
+      ValvePos = 1; // "Ouverte".
+    }
+    if (OpenSensor == 1 && CloseSensor == 0){
+      ValvePos = 2; // "Fermé"
+    }
+    if (OpenSensor == 1 && CloseSensor == 1){
+      ValvePos = 3; // "Partiel"
+    }
+    return ValvePos;
 }
 #endif
 
