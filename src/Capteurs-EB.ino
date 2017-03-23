@@ -17,7 +17,7 @@ STARTUP(WiFi.selectAntenna(ANT_EXTERNAL));
 STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 
 // Firmware version et date
-#define FirmwareVersion "1.2.6"   // Version du firmware du capteur.
+#define FirmwareVersion "1.2.7"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
@@ -43,7 +43,7 @@ VEcTk -> DEVICE_CONF == 7
 */
 
 /********* Choisir la configuration de device à compiler *********/
-#define DEVICE_CONF 7
+#define DEVICE_CONF 0
 /*****************************************************************/
 
 /*Config for P1, P2, P3 -> DEVICE_CONF == 0
@@ -62,6 +62,7 @@ P3        None            true            false            false      true      
   #define HASVALVES false             //Des valves sont relié à ce capteur
   #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
+  #define baseSampling  1             //basic sampling interval for main loop
 
 
 /*Config for V1, V2, V3 -> DEVICE_CONF == 1
@@ -80,6 +81,7 @@ V3        None            true            true(1)          true       true      
   #define HASVALVES false             //Des valves sont relié à ce capteur
   #define HASRELAYOUTPUT true         //Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
+  #define baseSampling  1             //basic sampling interval for main loop
 
 
 /*Config for PT1, PT2 -> DEVICE_CONF == 2
@@ -97,6 +99,7 @@ PT2       None            true            true(1)          false      false     
   #define HASVALVES false             //Des valves sont relié à ce capteur
   #define HASRELAYOUTPUT true         //Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
+  #define baseSampling  1             //basic sampling interval for main loop
 
 
 /*Config for RS1, RS2, RS3, RS4, RF2 -> DEVICE_CONF == 3
@@ -117,6 +120,7 @@ RF2       US100           false           true(1)          true       false     
   #define HASVALVES true              //Des valves sont relié à ce capteur
   #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR true     //Un thermistor est présent pour mesurer la température du boitier US100 robuste
+  #define baseSampling  2             //basic sampling interval for main loop. Very slow to avoid echo
 
 
 /*Config for RF1, RC1, RC2 -> DEVICE_CONF == 4
@@ -135,6 +139,7 @@ RC2       US100           false           true(1)          true       false     
   #define HASVALVES false             //Des valves sont relié à ce capteur
   #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
+  #define baseSampling  1             //basic sampling interval for main loop
 
 
 /*Config for RS5, RS6 -> DEVICE_CONF == 5
@@ -152,6 +157,7 @@ RS6       US100           false           false            false      false     
   #define HASVALVES true              //Des valves sont relié à ce capteur
   #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
+  #define baseSampling  1             //basic sampling interval for main loop
 
 
 /*Config for RHC -> DEVICE_CONF == 6
@@ -168,6 +174,7 @@ RHC       MB7389          false           true(1)          true       false     
   #define HASVALVES false             //Des valves sont relié à ce capteur
   #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
+  #define baseSampling  2             //basic sampling interval for main loop. Very slow to avoid echo
 
 
 /*Config for VEcTk -> DEVICE_CONF == 6
@@ -184,6 +191,7 @@ VEcTk     NONE            false           true(1)          true       false     
   #define HASVALVES true              //Des valves sont relié à ce capteur
   #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
+  #define baseSampling  1             //basic sampling interval for main loop
 
 
 /*Config for DummyDevice -> DEVICE_CONF == 8
@@ -191,7 +199,7 @@ DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSE
 Dummy     NONE            false           false            false      false           true      false          false
 */
 #elif (DEVICE_CONF == 8)
-  String config = "7 -> VEcTk";       //String info de configuration
+  String config = "8 -> Dummy";       //String info de configuration
   #define DISTANCESENSOR NONE         //Pour compilation conditionnelle du serial handler: US100. MB7389, None
   #define PUMPMOTORDETECT false       //Pour compilation conditionnelle de la routin e d'interruption
   #define HASDS18B20SENSOR false      //Pour le code spécifique au captgeur de température DS18B20
@@ -200,6 +208,7 @@ Dummy     NONE            false           false            false      false     
   #define HASVALVES true              //Des valves sont relié à ce capteur
   #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
+  #define baseSampling  1             //basic sampling interval for main loop
 
 #else
   #error Invalid device configuration!
@@ -222,7 +231,7 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define second 1000UL             // 1000 millisecond per sesond
 #define unJourEnMillis (24 * 60 * 60 * second)
 #define debounceDelay 50    // Debounce time for valve position readswitch
-#define fastSampling  6000UL   // in milliseconds
+#define fastSampling  6000UL     // in milliseconds
 #define slowSampling  10000UL    // in milliseconds
 #define numReadings 10           // Number of readings to average for filtering
 #define minDistChange 2.0 * numReadings      // Minimum change in distance to publish an event (1/16")
@@ -232,10 +241,10 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define maxRangeMB7389 1900 // Distance maximale valide pour le captgeur
 #define ONE_WIRE_BUS D4 //senseur sur D4
 #define DallasSensorResolution 9 // Résolution de lecture de température
-#define MaxHeatingPowerPercent 70 // Puissance maximale appliqué sur la résistance de chauffage
+#define MaxHeatingPowerPercent 90 // Puissance maximale appliqué sur la résistance de chauffage
 #define HeatingSetPoint 25 // Température cible à l'intérieur du boitier
 #define DefaultPublishDelay 5 // Interval de publication en minutes par défaut
-#define TimeoutDelay 3 * slowSampling
+#define TimeoutDelay 6 * slowSampling
 
 // Definition for vacuum transducer
 #define R1 18000                    // Pressur xducer scaling resistor 1
@@ -250,10 +259,10 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define evDistance 2
 #define evUS100Temperature 3
 #define evOutOfRange 4
-#define evValve1_OpenSensorState 5
-#define evValve1_CloseSensorState 6
-#define evValve2_OpenSensorState 7
-#define evValve2_CloseSensorState 8
+#define evValve1_OpenSensorState 5  // Inutilisé. Remplacé par evValve1_Position
+#define evValve1_CloseSensorState 6 // Inutilisé. Remplacé par evValve1_Position
+#define evValve2_OpenSensorState 7  // Inutilisé. Remplacé par evValve2_Position
+#define evValve2_CloseSensorState 8 // Inutilisé. Remplacé par evValve2_Position
 #define evRelais 9
 #define evVacuum 10
 #define evFlowmeterFlow 11
@@ -266,6 +275,7 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define evBootTimestamp 18
 #define evValve1_Position 19
 #define evValve2_Position 20
+#define evPumpCurrentState 21
 
 // Table des nom d'événements
 String eventName[] = {
@@ -289,7 +299,8 @@ String eventName[] = {
   "device/NewGenSN", // New generation of serial numbers for this device
   "device/boot", // Device boot or reboot timestamp
   "sensor/Valve1Pos", // Valve 1 position string
-  "sensor/Valve2Pos"  // Valve 2 position string
+  "sensor/Valve2Pos",  // Valve 2 position string
+  "pump/state"
   };
 
 // Structure définissant un événement
@@ -641,7 +652,7 @@ void setup() {
 void loop(){
   unsigned long loopTime = millis();
 // Execute every nextSampleTime(6 seconds)) read all sensors and reset watchdog
-  if (loopTime - timeLastUnit >= (1 * second)){
+  if (loopTime - timeLastUnit >= (baseSampling * second)){
     digitalWrite(led, LOW); // Pour indiqué le début de la prise de mesure
     PhotonWdgs::tickle(); // Reset watchdog
     readSelectedSensors(samplingIntervalCnt); //
@@ -680,9 +691,10 @@ void PublishAll(){
         pumpEvent = evPompe_T2;
       }
       pushToPublishQueue(pumpEvent, PumpCurrentState, changeTime);
+      pushToPublishQueue(evPumpCurrentState, PumpCurrentState, changeTime);
     }
   #endif
-
+  // Publish all every maxPublishDelay
   if (now - lastAllPublish > maxPublishDelay){
     lastAllPublish = now;
 
@@ -709,6 +721,11 @@ void PublishAll(){
     #endif
     #if HASVALVES
       CheckValvePos(true);
+    #endif
+
+    #if PUMPMOTORDETECT
+    // Publication de l'état de la pompe s'il y a eu changement
+      pushToPublishQueue(evPumpCurrentState, PumpCurrentState, changeTime);
     #endif
   }
 
@@ -1447,8 +1464,8 @@ bool pushToPublishQueue(uint8_t eventNamePtr, int eData, uint32_t timer){
   Serial.println(">>>> pushToPublishQueue:::");
   writeEvent(thisEvent); // Pousse les données dans le buffer circulaire
   noSerie++;
-  if (noSerie > 65535){
-     noSerie = 0;
+  if (noSerie >= 65535){
+    remoteReset("serialNo"); // Bump up the generation number and reset the serial no.
     }
   return true;
 }
