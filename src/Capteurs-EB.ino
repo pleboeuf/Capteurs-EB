@@ -17,7 +17,7 @@ STARTUP(WiFi.selectAntenna(ANT_EXTERNAL));
 STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 
 // Firmware version et date
-#define FirmwareVersion "1.2.7"   // Version du firmware du capteur.
+#define FirmwareVersion "1.2.9"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
@@ -236,7 +236,7 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define numReadings 10           // Number of readings to average for filtering
 #define minDistChange 2.0 * numReadings      // Minimum change in distance to publish an event (1/16")
 #define minTempChange 0.5 * numReadings      // Minimum temperature change to publish an event
-#define minVacuumChange 0.01 // Changement de 0.01 Po Hg avant publication du niveau de vide
+#define minVacuumChange 0.1 // Changement de 0.01 Po Hg avant publication du niveau de vide
 #define maxRangeUS100 3000 // Distance maximale valide pour le captgeur
 #define maxRangeMB7389 1900 // Distance maximale valide pour le captgeur
 #define ONE_WIRE_BUS D4 //senseur sur D4
@@ -1460,13 +1460,13 @@ String makeJSON(uint16_t numSerie, uint32_t timeStamp, uint32_t timer, int eData
 // Publie les événement et gère les no. de série et le stockage des événements
 bool pushToPublishQueue(uint8_t eventNamePtr, int eData, uint32_t timer){
   struct Event thisEvent;
+  noSerie++;
+  if (noSerie >= 65534){
+    remoteReset("serialNo"); // Bump up the generation number and reset the serial no.
+    }
   thisEvent = {noSerie, Time.now(), timer, eventNamePtr, eData};
   Serial.println(">>>> pushToPublishQueue:::");
   writeEvent(thisEvent); // Pousse les données dans le buffer circulaire
-  noSerie++;
-  if (noSerie >= 65535){
-    remoteReset("serialNo"); // Bump up the generation number and reset the serial no.
-    }
   return true;
 }
 
