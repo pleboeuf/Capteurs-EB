@@ -31,3 +31,9 @@
 
 // RHC -> DEVICE_CONF == 6
 #define RHC 6
+
+// VEcTk -> DEVICE_CONF == 7
+#define VEcTk 7
+
+// Dummy device , no sensors for compilation tests
+#define Dummy 8

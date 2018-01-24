@@ -177,7 +177,7 @@ RHC       MB7389          false           true(1)          true       false     
   #define baseSampling  2             //basic sampling interval for main loop. Very slow to avoid echo
 
 
-/*Config for VEcTk -> DEVICE_CONF == 6
+/*Config for VEcTk -> DEVICE_CONF == 7
 DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
 VEcTk     NONE            false           true(1)          true       false           true      false          false
 */
