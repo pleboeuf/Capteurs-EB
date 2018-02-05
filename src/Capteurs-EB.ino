@@ -227,8 +227,9 @@ bool hasRelayOutput = HASRELAYOUTPUT;
 bool hasUs100Thermistor = HASUS100THERMISTOR;
 
 // General definitions
-#define minute 60000UL            // 60000 millisecond per minute
 #define second 1000UL             // 1000 millisecond per sesond
+#define minute 60 * second        // 60000 millisecond per minute
+#define heure 60 * minute         // 3600000 millisecond par heure
 #define unJourEnMillis (24 * 60 * 60 * second)
 #define debounceDelay 50    // Debounce time for valve position readswitch
 #define fastSampling  6000UL     // in milliseconds
@@ -242,7 +243,7 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define ONE_WIRE_BUS D4 //senseur sur D4
 #define DallasSensorResolution 9 // Résolution de lecture de température
 #define MaxHeatingPowerPercent 90 // Puissance maximale appliqué sur la résistance de chauffage
-#define HeatingSetPoint 25 // Température cible à l'intérieur du boitier
+#define HeatingSetPoint 20 // Température cible à l'intérieur du boitier
 #define DefaultPublishDelay 5 // Interval de publication en minutes par défaut
 #define TimeoutDelay 6 * slowSampling
 
@@ -259,10 +260,10 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define evDistance 2
 #define evUS100Temperature 3
 #define evOutOfRange 4
-#define evValve1_OpenSensorState 5  // Inutilisé. Remplacé par evValve1_Position
-#define evValve1_CloseSensorState 6 // Inutilisé. Remplacé par evValve1_Position
-#define evValve2_OpenSensorState 7  // Inutilisé. Remplacé par evValve2_Position
-#define evValve2_CloseSensorState 8 // Inutilisé. Remplacé par evValve2_Position
+#define evPumpEndCycle 5            // Événement fin d'un cycle de pompe
+#define evRunOver5min 6             // Alerte Pompe en marche depuis plus de 5 min. Inutilisé.
+#define evDebutDeCoulee 7           // Début de coulée. Inutilisé.
+#define evFinDeCoulee 8             // Fin de coulée. Inutilisé
 #define evRelais 9
 #define evVacuum 10
 #define evFlowmeterFlow 11
@@ -284,10 +285,10 @@ String eventName[] = {
   "sensor/level", // Tank level. Post processing required for display
   "sensor/US100sensorTemp", // Temperature read on the US100 senson
   "sensor/outOfRange ", // Level sensor is out of max range
-  "sensor/openSensorV1", // Valve 1 open position sensor state. Active LOW
-  "sensor/closeSensorV1", // Valve 1 close position sensor state. Active LOW
-  "sensor/openSensorV2", // Valve 2 open position sensor state. Active LOW
-  "sensor/closeSensorV2", // Valve 2 close position sensor state. Active LOW
+  "pump/endCycle",            // Indicate a pump start/stop cycle is completed
+  "pump/warningRunOver5min",          // Dummy event Place holder
+  "pump/debutDeCoulee",          // Dummy event Place holder
+  "pump/finDeCoulee",          // Dummy event Place holder
   "output/ssrRelayState", // Output ssrRelay pin state. Active LOW
   "sensor/vacuum", // Vacuum rsensor eading
   "sensor/flowmeterValue", // Flowmeter reading. Not used
@@ -310,7 +311,7 @@ struct Event{
   uint32_t timer; // Temps depuis la mise en marche du capteur. Overflow après 49 jours.
   uint8_t namePtr; // Pointeur dans l'array des nom d'événement. (Pour sauver de l'espace NVRAM)
   int16_t eData;   // Données pour cet événement. Entier 16 bits. Pour sauvegarder des données en point flottant
-                   // multiplié d'abord la donnée par un facteur (1000 par ex.) en convertir en entier.
+                   // multiplié d'abord la donnée par un facteur (1000 par ex.) et convertir en entier.
                    // Il suffira de divisé la données au moment de la réception de l'événement.
 };
 
@@ -349,14 +350,20 @@ int heater = D3; //Contrôle le transistor du chauffage
 int rssi = 0;
 
 // Variables liés à la pompe
-bool PumpOldState = true;
+bool PumpOldState = true;           // Pour déterminer le chanement d'état
 bool PumpCurrentState = true;
-unsigned long changeTime = 0;
+bool PumpWarning = false;           // Alerte pour indiquer que la pompe fonctionne trop longtemps
+bool CouleeState = false;           // État de la coulée
+unsigned long changeTime = 0;       // Moment du dernier changement d'état de la pompe
+unsigned long T0 = 0;               // Début d'un cycle. (pompe arrête)
+unsigned long T1 = 0;               // Milieu d'un cycle. (pompe démarre)
+unsigned long T2 = 0;               // Fin d'un cycle. (pompe arrête), égale T0 du cycle suivant.
+double dutyCycle = 0;               // Duty cycle du dernier cycle de la pompe.
 
 // Variables liés aux valves
 int ValvePos_pin[] = {A5, A4, A3, A2};
 bool ValvePos_state[] = {true, true, true, true};
-int ValvePos_Name[] = {evValve1_OpenSensorState, evValve1_CloseSensorState, evValve2_OpenSensorState, evValve2_CloseSensorState};
+// int ValvePos_Name[] = {evValve1_OpenSensorState, evValve1_CloseSensorState, evValve2_OpenSensorState, evValve2_CloseSensorState};
 
 // Variables liés à la mesure de Température
 unsigned int US100HighByte = 0;
@@ -401,7 +408,7 @@ char publishString[buffSize];
 retained time_t newGenTimestamp = 0;
 retained uint16_t noSerie = 0; //Mettre en Backup RAM
 int maxPublishInterval = DefaultPublishDelay;
-unsigned long maxPublishDelay = maxPublishInterval * minute;
+volatile unsigned long maxPublishDelay_ms = maxPublishInterval * minute;
 int pumpEvent = 0;
 bool connWasLost = false;
 
@@ -459,23 +466,16 @@ class ExternalRGB {
   class PumpState_A1 {
     public:
       PumpState_A1() {
+        pinMode(A1, INPUT);
         attachInterrupt(A1, &PumpState_A1::A1Handler, this, CHANGE);
       }
       void A1Handler() {
-        System.ticksDelay(50000*System.ticksPerMicrosecond()); // Debounce 50 milliseconds
-        Serial.print("Pompe ");
-        // enregistre l'état et le temps
         PumpCurrentState = digitalRead(A1);
         changeTime = millis();
-        if (PumpCurrentState == false){
-          Serial.println("On");
-        } else {
-          Serial.println("Off");
-        }
       }
   };
 
-  PumpState_A1 pumpState; // Instantiate the class A1State
+  PumpState_A1 ThePumpState; // Instantiate the class A1State
 #endif
 
 #if HASDS18B20SENSOR
@@ -667,10 +667,11 @@ void loop(){
       samplingIntervalCnt++;
     }
   }
+  delay(200UL);
 }
 
 void PublishAll(){
-  // Publie au moins une fois à tous les "maxPublishDelay" millisecond
+  // Publie au moins une fois à tous les "maxPublishDelay_ms" millisecond
   now = millis();
 
   #if HASVALVES
@@ -687,15 +688,21 @@ void PublishAll(){
       PumpOldState = PumpCurrentState;
       if (PumpCurrentState == false){
         pumpEvent = evPompe_T1;
+        T1 = changeTime;
       } else {
         pumpEvent = evPompe_T2;
+        T2 = changeTime;
+        dutyCycle = (float)(T2 - T1) / (float)(T2 - T0); // À faire: gérer les cas T2 < T1 et T2 < T0
+        Serial.printlnf("T0= %d, T1= %d, T2= %d, dutyCycle : %.3f", T0, T1, T2, dutyCycle);
+        T0 = T2;
+        pushToPublishQueue(evPumpEndCycle, (int)(dutyCycle * 1000), changeTime);
       }
       pushToPublishQueue(pumpEvent, PumpCurrentState, changeTime);
       pushToPublishQueue(evPumpCurrentState, PumpCurrentState, changeTime);
     }
   #endif
-  // Publish all every maxPublishDelay
-  if (now - lastAllPublish > maxPublishDelay){
+  // Publish all every maxPublishDelay_ms
+  if (now - lastAllPublish > maxPublishDelay_ms){
     lastAllPublish = now;
 
     #if DISTANCESENSOR == US100
@@ -717,8 +724,9 @@ void PublishAll(){
     #endif
 
     #if HASVACUUMSENSOR
-        pushToPublishQueue(evVacuum, (int)(prev_VacAnalogvalue * 100), now);;
+        pushToPublishQueue(evVacuum, (int)(prev_VacAnalogvalue * 100), now);
     #endif
+
     #if HASVALVES
       CheckValvePos(true);
     #endif
@@ -807,9 +815,9 @@ void readSelectedSensors(int sensorNo) {
       delay(20UL);  // Just to have a visible flash on the LED
       break;
 
-    default:
-    // Pour permettre la modification de maxPublishDelay par le nuage
-      maxPublishDelay = maxPublishInterval * minute;
+    // default:
+    // Pour permettre la modification de maxPublishDelay_ms par le nuage
+      maxPublishDelay_ms = maxPublishInterval * minute;
   }
 }
 
@@ -1187,7 +1195,7 @@ Section réservé pour le code de mesure du vide (vacuum)
 void CheckValvePos(bool statusAll){
     bool valveCurrentState = false;
     String stateStr = "";
-    String positionCode[] = {"Erreur", "Ouverte", "Fermé", "Partiel"};
+    String positionCode[] = {"Erreur", "Ouvert", "Fermé", "Partiel"};
     for (int i=0; i <= 3; i++) {
         valveCurrentState = digitalRead(ValvePos_pin[i]);
         if ((ValvePos_state[i] != valveCurrentState) || statusAll == true){
@@ -1221,7 +1229,7 @@ int getValvePosition(bool OpenSensor, bool CloseSensor){
       ValvePos = 0; // "Erreur". Impossible en fonctionnement normal
     }
     if (OpenSensor == 0 && CloseSensor == 1){
-      ValvePos = 1; // "Ouverte".
+      ValvePos = 1; // "Ouvert".
     }
     if (OpenSensor == 1 && CloseSensor == 0){
       ValvePos = 2; // "Fermé"
@@ -1321,9 +1329,9 @@ bool writeEvent(struct Event thisEvent){
 
   } // Number of stored events in the buffer.
    //pour debug
-  Serial.print("W------> " + DomainName + DeptName + eventName[thisEvent.namePtr]);
-  Serial.printlnf(": writeEvent:: writePtr= %u, readPtr= %u, buffLen= %u, noSerie: %u, eData: %u, timer: %u",
-                                     writePtr, readPtr, buffLen, thisEvent.noSerie, thisEvent.eData, thisEvent.timer);
+  // Serial.print("W------> " + DomainName + DeptName + eventName[thisEvent.namePtr]);
+  // Serial.printlnf(": writeEvent:: writePtr= %u, readPtr= %u, buffLen= %u, noSerie: %u, eData: %u, timer: %u",
+  //                                    writePtr, readPtr, buffLen, thisEvent.noSerie, thisEvent.eData, thisEvent.timer);
   return true;
 }
 
@@ -1331,8 +1339,8 @@ bool writeEvent(struct Event thisEvent){
 struct Event readEvent(){
   struct Event thisEvent = {};
   if (readPtr == writePtr){
-    Serial.printlnf("<------- readEvent:: writePtr= %u, readPtr= %u, buffLen= %u, *** buffer vide ***",
-                                      writePtr, readPtr, buffLen);
+    // Serial.printlnf("<------- readEvent:: writePtr= %u, readPtr= %u, buffLen= %u, *** buffer vide ***",
+    //                                   writePtr, readPtr, buffLen);
     return thisEvent; // événement vide
   }
   thisEvent = eventBuffer[readPtr];
@@ -1343,9 +1351,9 @@ struct Event readEvent(){
       buffLen = writePtr - readPtr;
   }
   //pour debug
-  Serial.print("<R------ " + DomainName + DeptName + eventName[thisEvent.namePtr]);
-  Serial.printlnf(": readEvent:: writePtr= %u, readPtr= %u, buffLen= %u, noSerie: %u, eData: %u, timer: %u",
-                                    writePtr, readPtr, buffLen, thisEvent.noSerie, thisEvent.eData, thisEvent.timer);
+  // Serial.print("<R------ " + DomainName + DeptName + eventName[thisEvent.namePtr]);
+  // Serial.printlnf(": readEvent:: writePtr= %u, readPtr= %u, buffLen= %u, noSerie: %u, eData: %u, timer: %u",
+  //                                   writePtr, readPtr, buffLen, thisEvent.noSerie, thisEvent.eData, thisEvent.timer);
   return thisEvent;
 }
 
@@ -1359,9 +1367,9 @@ struct Event peekEvent(uint16_t peekReadPtr){
   }
   thisEvent = eventBuffer[peekReadPtr];
    //pour debug
-  Serial.print(" ------- " + eventName[thisEvent.namePtr]);
-  Serial.printlnf(": peekEvent:: writePtr= %u, readPtr= %u, buffLen= %u, noSerie: %u, eData: %u, timer: %u",
-                                    writePtr, peekReadPtr, buffLen, thisEvent.noSerie, thisEvent.eData, thisEvent.timer);
+  // Serial.print(" ------- " + eventName[thisEvent.namePtr]);
+  // Serial.printlnf(": peekEvent:: writePtr= %u, readPtr= %u, buffLen= %u, noSerie: %u, eData: %u, timer: %u",
+  //                                   writePtr, peekReadPtr, buffLen, thisEvent.noSerie, thisEvent.eData, thisEvent.timer);
   return thisEvent;
 }
 
@@ -1435,9 +1443,9 @@ struct Event replayReadEvent(){
   }
 
   //pour debug
-  Serial.print("<------- " + DomainName + DeptName + eventName[thisEvent.namePtr]);
-  Serial.printlnf(": readEvent:: writePtr= %u, replayPtr= %u, replayBuffLen= %u, noSerie: %u, eData: %u, timer: %u",
-                                    writePtr, replayPtr, replayBuffLen, thisEvent.noSerie, thisEvent.eData, thisEvent.timer);
+  // Serial.print("<------- " + DomainName + DeptName + eventName[thisEvent.namePtr]);
+  // Serial.printlnf(": readEvent:: writePtr= %u, replayPtr= %u, replayBuffLen= %u, noSerie: %u, eData: %u, timer: %u",
+  //                                   writePtr, replayPtr, replayBuffLen, thisEvent.noSerie, thisEvent.eData, thisEvent.timer);
   return thisEvent;
 }
 
@@ -1465,7 +1473,7 @@ bool pushToPublishQueue(uint8_t eventNamePtr, int eData, uint32_t timer){
     remoteReset("serialNo"); // Bump up the generation number and reset the serial no.
     }
   thisEvent = {noSerie, Time.now(), timer, eventNamePtr, eData};
-  Serial.println(">>>> pushToPublishQueue:::");
+  Serial.printlnf(">>>> pushToPublishQueue::: " + eventName[eventNamePtr]);
   writeEvent(thisEvent); // Pousse les données dans le buffer circulaire
   return true;
 }
