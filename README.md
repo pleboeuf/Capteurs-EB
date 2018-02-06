@@ -18,6 +18,7 @@ Chaque configuration correspond à une combinaison des senseurs et/ou fonctions 
 | HASVALVES          | true / false          |
 | HASRELAYOUTPUT     | true / false          |
 | HASUS100THERMISTOR | true / false          |
+| baseSampling       | 1 ou 2                |
 
 Les _configurations_ suivantes sont utilisé actuellement.
 
@@ -30,3 +31,4 @@ Les _configurations_ suivantes sont utilisé actuellement.
 |RF1, RC1, RC2 | 4 |
 |RS5, RS6 | 5 |
 |RHC | 6 |
+|VEcTk | 7 |
