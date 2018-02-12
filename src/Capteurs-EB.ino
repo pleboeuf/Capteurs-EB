@@ -692,7 +692,9 @@ void PublishAll(){
       } else {
         pumpEvent = evPompe_T2;
         T2 = changeTime;
-        dutyCycle = (float)(T2 - T1) / (float)(T2 - T0); // À faire: gérer les cas T2 < T1 et T2 < T0
+        if (T2 > T1 && T1 > T0) {
+          dutyCycle = (float)(T2 - T1) / (float)(T2 - T0); // In case of overflow of T1 or T2, assume the dutycycle did not changed.
+        }
         Serial.printlnf("T0= %d, T1= %d, T2= %d, dutyCycle : %.3f", T0, T1, T2, dutyCycle);
         T0 = T2;
         pushToPublishQueue(evPumpEndCycle, (int)(dutyCycle * 1000), changeTime);
