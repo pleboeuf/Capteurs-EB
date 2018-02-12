@@ -231,25 +231,29 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define minute 60 * second        // 60000 millisecond per minute
 #define heure 60 * minute         // 3600000 millisecond par heure
 #define unJourEnMillis (24 * 60 * 60 * second)
-#define debounceDelay 50    // Debounce time for valve position readswitch
-#define fastSampling  6000UL     // in milliseconds
-#define slowSampling  10000UL    // in milliseconds
-#define numReadings 10           // Number of readings to average for filtering
+#define debounceDelay 50          // Debounce time for valve position readswitch
+#define fastSampling  6000UL      // in milliseconds
+#define slowSampling  10000UL     // in milliseconds
+#define numReadings 10            // Number of readings to average for filtering
 #define minDistChange 2.0 * numReadings      // Minimum change in distance to publish an event (1/16")
 #define minTempChange 0.5 * numReadings      // Minimum temperature change to publish an event
-#define minVacuumChange 0.1 // Changement de 0.01 Po Hg avant publication du niveau de vide
-#define maxRangeUS100 3000 // Distance maximale valide pour le captgeur
-#define maxRangeMB7389 1900 // Distance maximale valide pour le captgeur
-#define ONE_WIRE_BUS D4 //senseur sur D4
-#define DallasSensorResolution 9 // Résolution de lecture de température
+#define minVacuumChange 0.1       // Changement de 0.01 Po Hg avant publication du niveau de vide
+#define maxRangeUS100 3000        // Distance maximale valide pour le captgeur
+#define maxRangeMB7389 1900       // Distance maximale valide pour le captgeur
+#define ONE_WIRE_BUS D4           //senseur sur D4
+#define DallasSensorResolution 9  // Résolution de lecture de température
 #define MaxHeatingPowerPercent 90 // Puissance maximale appliqué sur la résistance de chauffage
-#define HeatingSetPoint 20 // Température cible à l'intérieur du boitier
-#define DefaultPublishDelay 5 // Interval de publication en minutes par défaut
-#define TimeoutDelay 6 * slowSampling
+#define HeatingSetPoint 20        // Température cible à l'intérieur du boitier
+#define DefaultPublishDelay 5     // Interval de publication en minutes par défaut
+#define TimeoutDelay 6 * slowSampling // Device watch dog timer time limit
+#define pumpRunTimeLimit 3 * minute // Maximum pump run time before a warning is issued
+#define delaisFinDeCoulee 3 * heure // Temps sans activité de la pompe pour décréter la fin de la couléé
+#define pumpONstate 0         // Pump signal is active low.
+#define pumpOFFstate 1         // Pump signal is active low.
 
 // Definition for vacuum transducer
-#define R1 18000                    // Pressur xducer scaling resistor 1
-#define R2 36000                    // Pressur xducer scaling resistor 2
+#define R1 18000                    // pressure xducer scaling resistor 1
+#define R2 36000                    // Pressure xducer scaling resistor 2
 #define Vref 3.3                    // Analog input reference voltage
 #define K_fact 0.007652             // Vacuum xducer K factor
 #define Vs 5.0                      // Vacuum xducer supply voltage
@@ -261,7 +265,7 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define evUS100Temperature 3
 #define evOutOfRange 4
 #define evPumpEndCycle 5            // Événement fin d'un cycle de pompe
-#define evRunOver5min 6             // Alerte Pompe en marche depuis plus de 5 min. Inutilisé.
+#define evRunTooLong 6              // Alerte Pompe en marche depuis plus de 5 min. Inutilisé.
 #define evDebutDeCoulee 7           // Début de coulée. Inutilisé.
 #define evFinDeCoulee 8             // Fin de coulée. Inutilisé
 #define evRelais 9
@@ -280,36 +284,36 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 
 // Table des nom d'événements
 String eventName[] = {
-  "pump/T1",  // Pump state. Pump start
-  "pump/T2", // Pump state. Pump stop
-  "sensor/level", // Tank level. Post processing required for display
-  "sensor/US100sensorTemp", // Temperature read on the US100 senson
-  "sensor/outOfRange ", // Level sensor is out of max range
-  "pump/endCycle",            // Indicate a pump start/stop cycle is completed
-  "pump/warningRunOver5min",          // Dummy event Place holder
-  "pump/debutDeCoulee",          // Dummy event Place holder
-  "pump/finDeCoulee",          // Dummy event Place holder
-  "output/ssrRelayState", // Output ssrRelay pin state. Active LOW
-  "sensor/vacuum", // Vacuum rsensor eading
-  "sensor/flowmeterValue", // Flowmeter reading. Not used
-  "computed/flowmeterVolume", // Volume computed from flowmert readings. Not used
-  "sensor/atmPressure", // Atmospheric pressure
-  "sensor/enclosureTemp", // Temperature inside device enclosure.
-  "sensor/ambientTemp", // Ambient temperature read by remote probe.
-  "output/enclosureHeating", // Value of PWM output to heating resistor.
-  "device/NewGenSN", // New generation of serial numbers for this device
-  "device/boot", // Device boot or reboot timestamp
-  "sensor/Valve1Pos", // Valve 1 position string
-  "sensor/Valve2Pos",  // Valve 2 position string
+  "pump/T1",                        // Pump state. Pump start
+  "pump/T2",                        // Pump state. Pump stop
+  "sensor/level",                   // Tank level. Post processing required for display
+  "sensor/US100sensorTemp",         // Temperature read on the US100 senson
+  "sensor/outOfRange ",             // Level sensor is out of max range
+  "pump/endCycle",                  // Indicate a pump start/stop cycle is completed
+  "pump/warningRunTooLong",        // Dummy event Place holder
+  "pump/debutDeCoulee",             // Dummy event Place holder
+  "pump/finDeCoulee",               // Dummy event Place holder
+  "output/ssrRelayState",           // Output ssrRelay pin state. Active LOW
+  "sensor/vacuum",                  // Vacuum rsensor eading
+  "sensor/flowmeterValue",          // Flowmeter reading. Not used
+  "computed/flowmeterVolume",       // Volume computed from flowmert readings. Not used
+  "sensor/atmPressure",             // Atmospheric pressure
+  "sensor/enclosureTemp",           // Temperature inside device enclosure.
+  "sensor/ambientTemp",             // Ambient temperature read by remote probe.
+  "output/enclosureHeating",        // Value of PWM output to heating resistor.
+  "device/NewGenSN",                // New generation of serial numbers for this device
+  "device/boot",                    // Device boot or reboot timestamp
+  "sensor/Valve1Pos",               // Valve 1 position string
+  "sensor/Valve2Pos",               // Valve 2 position string
   "pump/state"
   };
 
 // Structure définissant un événement
 struct Event{
-  uint16_t noSerie; // Le numéro de série est généré automatiquement
+  uint32_t noSerie; // Le numéro de série est généré automatiquement
   uint32_t timeStamp; // Timestamp du début d'une génération de noSerie.
   uint32_t timer; // Temps depuis la mise en marche du capteur. Overflow après 49 jours.
-  uint8_t namePtr; // Pointeur dans l'array des nom d'événement. (Pour sauver de l'espace NVRAM)
+  uint16_t namePtr; // Pointeur dans l'array des nom d'événement. (Pour sauver de l'espace NVRAM)
   int16_t eData;   // Données pour cet événement. Entier 16 bits. Pour sauvegarder des données en point flottant
                    // multiplié d'abord la donnée par un facteur (1000 par ex.) et convertir en entier.
                    // Il suffira de divisé la données au moment de la réception de l'événement.
@@ -334,14 +338,14 @@ String DeptName = "";
 int RGBled_Red = D0;
 int RGBled_Green = D1;
 int RGBLed_Blue = D2;
-int led = D7; // Feedback led
-int ssrRelay = D6; // Solid state relay
+int led = D7;                     // Feedback led
+int ssrRelay = D6;                // Solid state relay
 int RelayState = false;
-int motorState = A1; // input pour Pompe marche/arrêt
-int heater = D3; //Contrôle le transistor du chauffage
+int motorState = A1;              // input pour Pompe marche/arrêt
+int heater = D3;                  //Contrôle le transistor du chauffage
 #if HASVACUUMSENSOR
-  int VacuumSensor = A0; //Analogue input pour la mesure du vide
-  float VacCalibration = 0;  // Variable contenant la valeur de calibration du capteur.
+  int VacuumSensor = A0;          //Analogue input pour la mesure du vide
+  float VacCalibration = 0;       // Variable contenant la valeur de calibration du capteur.
   double VacAnalogvalue = 0;      // Mesure du vide
   double prev_VacAnalogvalue = 0; // Mesure précédente du vide
 #endif
@@ -350,10 +354,10 @@ int heater = D3; //Contrôle le transistor du chauffage
 int rssi = 0;
 
 // Variables liés à la pompe
-bool PumpOldState = true;           // Pour déterminer le chanement d'état
-bool PumpCurrentState = true;
+bool PumpOldState = pumpOFFstate;           // Pour déterminer le chanement d'état
+bool PumpCurrentState = pumpOFFstate; // Initialize pump in the OFF state
 bool PumpWarning = false;           // Alerte pour indiquer que la pompe fonctionne trop longtemps
-bool CouleeState = false;           // État de la coulée
+bool couleeEnCour = false;          // État de la coulée
 unsigned long changeTime = 0;       // Moment du dernier changement d'état de la pompe
 unsigned long T0 = 0;               // Début d'un cycle. (pompe arrête)
 unsigned long T1 = 0;               // Milieu d'un cycle. (pompe démarre)
@@ -402,11 +406,12 @@ unsigned long lastRTCSync = millis();
 unsigned int samplingInterval = fastSampling;
 unsigned int samplingIntervalCnt = 4;
 unsigned long timeLastUnit = 0;
+unsigned long lastRunWarning = millis();
 
 // Variables liés aux publications
 char publishString[buffSize];
 retained time_t newGenTimestamp = 0;
-retained uint16_t noSerie = 0; //Mettre en Backup RAM
+retained uint32_t noSerie = 0; //Mettre en Backup RAM
 int maxPublishInterval = DefaultPublishDelay;
 volatile unsigned long maxPublishDelay_ms = maxPublishInterval * minute;
 int pumpEvent = 0;
@@ -470,6 +475,7 @@ class ExternalRGB {
         attachInterrupt(A1, &PumpState_A1::A1Handler, this, CHANGE);
       }
       void A1Handler() {
+        // IMPORTANT: Pump is active LOW. Pump is ON when PumpCurrentState == false
         PumpCurrentState = digitalRead(A1);
         changeTime = millis();
       }
@@ -685,8 +691,8 @@ void PublishAll(){
   #if PUMPMOTORDETECT
   // Publication de l'état de la pompe s'il y a eu changement
     if (PumpCurrentState != PumpOldState){
-      PumpOldState = PumpCurrentState;
-      if (PumpCurrentState == false){
+
+      if (PumpCurrentState == pumpONstate){
         pumpEvent = evPompe_T1;
         T1 = changeTime;
       } else {
@@ -695,13 +701,38 @@ void PublishAll(){
         if (T2 > T1 && T1 > T0) {
           dutyCycle = (float)(T2 - T1) / (float)(T2 - T0); // In case of overflow of T1 or T2, assume the dutycycle did not changed.
         }
+        if (!couleeEnCour){
+          couleeEnCour = true;
+          pushToPublishQueue(evDebutDeCoulee, couleeEnCour, changeTime);
+        }
+
         Serial.printlnf("T0= %d, T1= %d, T2= %d, dutyCycle : %.3f", T0, T1, T2, dutyCycle);
         T0 = T2;
         pushToPublishQueue(evPumpEndCycle, (int)(dutyCycle * 1000), changeTime);
       }
       pushToPublishQueue(pumpEvent, PumpCurrentState, changeTime);
       pushToPublishQueue(evPumpCurrentState, PumpCurrentState, changeTime);
+      PumpOldState = PumpCurrentState;
     }
+
+    // Si la coulée est en cour ET la pompe est arrêté depuis plus longtemps que le délais établit (3h)
+    //alors marque la coulée comme arrêté et émettre un événement de fin de coulée.
+      if (couleeEnCour && PumpCurrentState == pumpOFFstate && ((now - T0) > delaisFinDeCoulee) ){
+        couleeEnCour = false;
+        pushToPublishQueue(evFinDeCoulee, couleeEnCour, now);
+      }
+
+    // Publier un avertissement si la pompe fonctionne depuis trop longtemps
+      if (couleeEnCour && PumpCurrentState == pumpONstate && ((now - lastRunWarning) > 1 * minute)){
+        if (now > T1){
+          unsigned long pumpRunTime = now - T1;
+          if (pumpRunTime > pumpRunTimeLimit){
+            pushToPublishQueue(evRunTooLong, (int)(pumpRunTime / 1000UL), now);
+            lastRunWarning = now;
+          }
+        }
+      }
+
   #endif
   // Publish all every maxPublishDelay_ms
   if (now - lastAllPublish > maxPublishDelay_ms){
@@ -1460,7 +1491,7 @@ typedef struct Event{
   int16_t eData;   // Données pour cet événement. Entier 16 bits. Pour sauvegarder des données en point flottant
 */
 // Formattage standard pour les données sous forme JSON
-String makeJSON(uint16_t numSerie, uint32_t timeStamp, uint32_t timer, int eData, String eName, bool replayFlag){
+String makeJSON(uint32_t numSerie, uint32_t timeStamp, uint32_t timer, int eData, String eName, bool replayFlag){
     sprintf(publishString,"{\"noSerie\": %u,\"generation\": %lu,\"timestamp\": %lu,\"timer\": %lu,\"eData\":%d,\"eName\": \"%s\",\"replay\":%d}",
                               numSerie, newGenTimestamp, timeStamp, timer, eData, eName.c_str(), replayFlag);
     Serial.printlnf ("makeJSON: %s",publishString);
@@ -1471,9 +1502,9 @@ String makeJSON(uint16_t numSerie, uint32_t timeStamp, uint32_t timer, int eData
 bool pushToPublishQueue(uint8_t eventNamePtr, int eData, uint32_t timer){
   struct Event thisEvent;
   noSerie++;
-  if (noSerie >= 65534){
-    remoteReset("serialNo"); // Bump up the generation number and reset the serial no.
-    }
+  // if (noSerie >= 65534){
+  //   remoteReset("serialNo"); // Bump up the generation number and reset the serial no.
+  //   }
   thisEvent = {noSerie, Time.now(), timer, eventNamePtr, eData};
   Serial.printlnf(">>>> pushToPublishQueue::: " + eventName[eventNamePtr]);
   writeEvent(thisEvent); // Pousse les données dans le buffer circulaire
