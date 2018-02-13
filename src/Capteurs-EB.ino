@@ -17,7 +17,7 @@ STARTUP(WiFi.selectAntenna(ANT_EXTERNAL));
 STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 
 // Firmware version et date
-#define FirmwareVersion "1.2.9"   // Version du firmware du capteur.
+#define FirmwareVersion "1.3.0"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
@@ -691,7 +691,6 @@ void PublishAll(){
   #if PUMPMOTORDETECT
   // Publication de l'état de la pompe s'il y a eu changement
     if (PumpCurrentState != PumpOldState){
-
       if (PumpCurrentState == pumpONstate){
         pumpEvent = evPompe_T1;
         T1 = changeTime;
