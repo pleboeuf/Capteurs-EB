@@ -17,7 +17,7 @@ STARTUP(WiFi.selectAntenna(ANT_EXTERNAL));
 STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 
 // Firmware version et date
-#define FirmwareVersion "1.3.0"   // Version du firmware du capteur.
+#define FirmwareVersion "1.3.2"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
@@ -247,9 +247,11 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define DefaultPublishDelay 5     // Interval de publication en minutes par défaut
 #define TimeoutDelay 6 * slowSampling // Device watch dog timer time limit
 #define pumpRunTimeLimit 3 * minute // Maximum pump run time before a warning is issued
-#define delaisFinDeCoulee 3 * heure // Temps sans activité de la pompe pour décréter la fin de la couléé
-#define pumpONstate 0         // Pump signal is active low.
-#define pumpOFFstate 1         // Pump signal is active low.
+#define delaisFinDeCoulee 5 * minute // Temps sans activité de la pompe pour décréter la fin de la couléé
+#define pumpONstate 0             // Pump signal is active low.
+#define pumpOFFstate 1            // Pump signal is active low.
+#define StartDSTtime 1520748000   //dim 11 mar, 02 h 00 = 1520748000
+#define EndDSTtime 1541314800     //dim 4 nov, 02 h 00 = 1541314800
 
 // Definition for vacuum transducer
 #define R1 18000                    // pressure xducer scaling resistor 1
@@ -281,6 +283,8 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define evValve1_Position 19
 #define evValve2_Position 20
 #define evPumpCurrentState 21
+#define CurrentDutyCycle 22
+#define evPompe_T2_ONtime 23
 
 // Table des nom d'événements
 String eventName[] = {
@@ -290,7 +294,7 @@ String eventName[] = {
   "sensor/US100sensorTemp",         // Temperature read on the US100 senson
   "sensor/outOfRange ",             // Level sensor is out of max range
   "pump/endCycle",                  // Indicate a pump start/stop cycle is completed
-  "pump/warningRunTooLong",        // Dummy event Place holder
+  "pump/warningRunTooLong",         // Dummy event Place holder
   "pump/debutDeCoulee",             // Dummy event Place holder
   "pump/finDeCoulee",               // Dummy event Place holder
   "output/ssrRelayState",           // Output ssrRelay pin state. Active LOW
@@ -305,7 +309,9 @@ String eventName[] = {
   "device/boot",                    // Device boot or reboot timestamp
   "sensor/Valve1Pos",               // Valve 1 position string
   "sensor/Valve2Pos",               // Valve 2 position string
-  "pump/state"
+  "pump/state",                     // Étant actuel de la pompe
+  "pump/CurrentDutyCycle",          // Étant actuel du dutyCycle
+  "pump/T2_ONtime"               // Durée de marche de la pompe en millisecondes
   };
 
 // Structure définissant un événement
@@ -362,6 +368,8 @@ unsigned long changeTime = 0;       // Moment du dernier changement d'état de l
 unsigned long T0 = 0;               // Début d'un cycle. (pompe arrête)
 unsigned long T1 = 0;               // Milieu d'un cycle. (pompe démarre)
 unsigned long T2 = 0;               // Fin d'un cycle. (pompe arrête), égale T0 du cycle suivant.
+unsigned long T_ON = 0;             // Pump ON time
+unsigned long T_Cycle = 100000UL;     // Pump OFF time
 double dutyCycle = 0;               // Duty cycle du dernier cycle de la pompe.
 
 // Variables liés aux valves
@@ -610,10 +618,12 @@ void setup() {
       CheckValvePos(true);
     #endif
 
-    Time.zone(-4);
+    Time.zone(-5);
     Time.setFormat(TIME_FORMAT_ISO8601_FULL);
     Particle.syncTime();
     pushToPublishQueue(evBootTimestamp, 0,  millis());
+    pushToPublishQueue(evPumpEndCycle, 0, millis());
+    pushToPublishQueue(evFinDeCoulee, false, millis());
 
     PhotonWdgs::begin(true, true, TimeoutDelay, TIMER7);
     lastPublish = millis(); //Initialise le temps initial de publication
@@ -681,11 +691,11 @@ void PublishAll(){
   now = millis();
 
   #if HASVALVES
-    CheckValvePos(false); // publish if state changed
+    CheckValvePos(false); // publish if valve state changed
   #endif
 
   #if HASHEATING
-    simpleThermostat(HeatingSetPoint);
+    simpleThermostat(HeatingSetPoint); // Control the enclosure heation
   #endif
 
   #if PUMPMOTORDETECT
@@ -694,15 +704,23 @@ void PublishAll(){
       if (PumpCurrentState == pumpONstate){
         pumpEvent = evPompe_T1;
         T1 = changeTime;
-      } else {
-        pumpEvent = evPompe_T2;
-        T2 = changeTime;
-        if (T2 > T1 && T1 > T0) {
-          dutyCycle = (float)(T2 - T1) / (float)(T2 - T0); // In case of overflow of T1 or T2, assume the dutycycle did not changed.
-        }
         if (!couleeEnCour){
           couleeEnCour = true;
           pushToPublishQueue(evDebutDeCoulee, couleeEnCour, changeTime);
+        }
+      } else {
+        pumpEvent = evPompe_T2;
+        T2 = changeTime;
+        // S'assurer qu'il n'y a pas eu d'overflow des compteurs avant de calculer le dutyCycle
+        if (T2 > T1 && T1 > T0) {
+          T_ON = (T2 - T1);     // Temps de marche de la pompe
+          T_Cycle = (T2 - T0);  // Temps de cycle total.
+          // Calculer le dutyCycle si la pompe n'est pas resté en marche trop longtemps.
+          if (!(T_ON > pumpRunTimeLimit)){
+            dutyCycle = (float)T_ON / (float)T_Cycle; // In case of overflow of T1 or T2, assume the dutycycle did not changed.
+            // if (dutyCycle < 0.005) {dutyCycle = 0;}
+          }
+          pushToPublishQueue(evPompe_T2_ONtime, T_ON, now);
         }
 
         Serial.printlnf("T0= %d, T1= %d, T2= %d, dutyCycle : %.3f", T0, T1, T2, dutyCycle);
@@ -711,21 +729,23 @@ void PublishAll(){
       }
       pushToPublishQueue(pumpEvent, PumpCurrentState, changeTime);
       pushToPublishQueue(evPumpCurrentState, PumpCurrentState, changeTime);
+
       PumpOldState = PumpCurrentState;
     }
 
     // Si la coulée est en cour ET la pompe est arrêté depuis plus longtemps que le délais établit (3h)
-    //alors marque la coulée comme arrêté et émettre un événement de fin de coulée.
+    // alors marque la coulée comme arrêté et émettre un événement de fin de coulée.
       if (couleeEnCour && PumpCurrentState == pumpOFFstate && ((now - T0) > delaisFinDeCoulee) ){
         couleeEnCour = false;
         pushToPublishQueue(evFinDeCoulee, couleeEnCour, now);
       }
 
     // Publier un avertissement si la pompe fonctionne depuis trop longtemps
-      if (couleeEnCour && PumpCurrentState == pumpONstate && ((now - lastRunWarning) > 1 * minute)){
+      if (PumpCurrentState == pumpONstate && ((now - lastRunWarning) > 1 * minute)){
         if (now > T1){
           unsigned long pumpRunTime = now - T1;
           if (pumpRunTime > pumpRunTimeLimit){
+            // Publish an event with the number of seconds the pump is running
             pushToPublishQueue(evRunTooLong, (int)(pumpRunTime / 1000UL), now);
             lastRunWarning = now;
           }
@@ -764,7 +784,16 @@ void PublishAll(){
     #endif
 
     #if PUMPMOTORDETECT
-    // Publication de l'état de la pompe s'il y a eu changement
+      // Si la coulée est toujours en cour et le compteur de temps ne fait pas d'overflow et que la pompe est arrêté
+      // depuis plus longtemps que le cycle précédent alors on recalcule le dutycycle et on publie un nouvel événement.
+      // On assume que le temps ON de la pompe est le même qu'au cycle précédent.
+      if (couleeEnCour && PumpCurrentState == pumpOFFstate && now > T0 && (now - T0 + T_ON) > T_Cycle){
+        float T_Cycle_est = (now - T0 + T_ON);    // Temps de cycle estimé
+        dutyCycle = (float)T_ON / T_Cycle_est;
+        if (dutyCycle < 0.005) {dutyCycle = 0;}  // Mettre à zéro si inférieur à 0.5%
+        pushToPublishQueue(CurrentDutyCycle, (int)(dutyCycle * 1000), now);
+      }
+      // Publication de l'état de la pompe à interval
       pushToPublishQueue(evPumpCurrentState, PumpCurrentState, changeTime);
     #endif
   }
@@ -772,7 +801,15 @@ void PublishAll(){
 // Synchronisation du temps avec Particle Cloud une fois par jour
   if (millis() - lastRTCSync > unJourEnMillis) {
       Particle.syncTime();
+      Serial.printlnf("Synchronisation du temps avec le nuage de Particle");
       lastRTCSync = millis();
+      if (!Time.isDST() && Time.now() >= StartDSTtime){
+        Time.beginDST();
+        Serial.printlnf("Début de l'heure avancé");
+      } else if (Time.isDST() && Time.now() >= EndDSTtime){
+        Time.endDST();
+        Serial.printlnf("Fin de l'heure avancé");
+      }
   }
 // Publier les événements se trouvant dans le buffer
   if(buffLen > 0){
