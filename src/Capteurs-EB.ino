@@ -247,7 +247,7 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define DefaultPublishDelay 5     // Interval de publication en minutes par défaut
 #define TimeoutDelay 6 * slowSampling // Device watch dog timer time limit
 #define pumpRunTimeLimit 3 * minute // Maximum pump run time before a warning is issued
-#define delaisFinDeCoulee 5 * minute // Temps sans activité de la pompe pour décréter la fin de la couléé
+#define delaisFinDeCoulee 3 * heure // Temps sans activité de la pompe pour décréter la fin de la couléé
 #define pumpONstate 0             // Pump signal is active low.
 #define pumpOFFstate 1            // Pump signal is active low.
 #define StartDSTtime 1520748000   //dim 11 mar, 02 h 00 = 1520748000
@@ -706,7 +706,9 @@ void PublishAll(){
         T1 = changeTime;
         if (!couleeEnCour){
           couleeEnCour = true;
-          pushToPublishQueue(evDebutDeCoulee, couleeEnCour, changeTime);
+          #if (DEVICE_CONF == 0) // Événement pour les pompes 1 2 et 3 seulement
+            pushToPublishQueue(evDebutDeCoulee, couleeEnCour, changeTime);
+          #endif
         }
       } else {
         pumpEvent = evPompe_T2;
@@ -725,7 +727,9 @@ void PublishAll(){
 
         Serial.printlnf("T0= %d, T1= %d, T2= %d, dutyCycle : %.3f", T0, T1, T2, dutyCycle);
         T0 = T2;
-        pushToPublishQueue(evPumpEndCycle, (int)(dutyCycle * 1000), changeTime);
+        #if (DEVICE_CONF == 0) // Événement pour les pompes 1 2 et 3 seulement
+          pushToPublishQueue(evPumpEndCycle, (int)(dutyCycle * 1000), changeTime);
+        #endif
       }
       pushToPublishQueue(pumpEvent, PumpCurrentState, changeTime);
       pushToPublishQueue(evPumpCurrentState, PumpCurrentState, changeTime);
@@ -735,11 +739,11 @@ void PublishAll(){
 
     // Si la coulée est en cour ET la pompe est arrêté depuis plus longtemps que le délais établit (3h)
     // alors marque la coulée comme arrêté et émettre un événement de fin de coulée.
+    #if (DEVICE_CONF == 0) // Événement pour les pompes 1 2 et 3 seulement
       if (couleeEnCour && PumpCurrentState == pumpOFFstate && ((now - T0) > delaisFinDeCoulee) ){
         couleeEnCour = false;
         pushToPublishQueue(evFinDeCoulee, couleeEnCour, now);
       }
-
     // Publier un avertissement si la pompe fonctionne depuis trop longtemps
       if (PumpCurrentState == pumpONstate && ((now - lastRunWarning) > 1 * minute)){
         if (now > T1){
@@ -751,6 +755,7 @@ void PublishAll(){
           }
         }
       }
+    #endif
 
   #endif
   // Publish all every maxPublishDelay_ms
@@ -791,7 +796,9 @@ void PublishAll(){
         float T_Cycle_est = (now - T0 + T_ON);    // Temps de cycle estimé
         dutyCycle = (float)T_ON / T_Cycle_est;
         if (dutyCycle < 0.005) {dutyCycle = 0;}  // Mettre à zéro si inférieur à 0.5%
-        pushToPublishQueue(CurrentDutyCycle, (int)(dutyCycle * 1000), now);
+        #if (DEVICE_CONF == 0) // Événement pour les pompes 1 2 et 3 seulement
+          pushToPublishQueue(CurrentDutyCycle, (int)(dutyCycle * 1000), now);
+        #endif
       }
       // Publication de l'état de la pompe à interval
       pushToPublishQueue(evPumpCurrentState, PumpCurrentState, changeTime);
