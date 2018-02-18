@@ -17,7 +17,7 @@ STARTUP(WiFi.selectAntenna(ANT_EXTERNAL));
 STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 
 // Firmware version et date
-#define FirmwareVersion "1.3.2"   // Version du firmware du capteur.
+#define FirmwareVersion "1.3.3"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
@@ -43,7 +43,7 @@ VEcTk -> DEVICE_CONF == 7
 */
 
 /********* Choisir la configuration de device à compiler *********/
-#define DEVICE_CONF 0
+#define DEVICE_CONF 2
 /*****************************************************************/
 
 /*Config for P1, P2, P3 -> DEVICE_CONF == 0
@@ -622,8 +622,10 @@ void setup() {
     Time.setFormat(TIME_FORMAT_ISO8601_FULL);
     Particle.syncTime();
     pushToPublishQueue(evBootTimestamp, 0,  millis());
-    pushToPublishQueue(evPumpEndCycle, 0, millis());
-    pushToPublishQueue(evFinDeCoulee, false, millis());
+    #if (DEVICE_CONF == 0) // Événement pour les pompes 1 2 et 3 seulement
+      pushToPublishQueue(evPumpEndCycle, 0, millis());
+      pushToPublishQueue(evFinDeCoulee, false, millis());
+    #endif
 
     PhotonWdgs::begin(true, true, TimeoutDelay, TIMER7);
     lastPublish = millis(); //Initialise le temps initial de publication
