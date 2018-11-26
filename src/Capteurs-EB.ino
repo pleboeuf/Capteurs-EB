@@ -43,7 +43,7 @@ VEcTk -> DEVICE_CONF == 7
 */
 
 /********* Choisir la configuration de device à compiler *********/
-#define DEVICE_CONF 2
+#define DEVICE_CONF 0
 /*****************************************************************/
 
 /*Config for P1, P2, P3 -> DEVICE_CONF == 0
@@ -292,7 +292,7 @@ String eventName[] = {
   "pump/T2",                        // Pump state. Pump stop
   "sensor/level",                   // Tank level. Post processing required for display
   "sensor/US100sensorTemp",         // Temperature read on the US100 senson
-  "sensor/outOfRange ",             // Level sensor is out of max range
+  "sensor/outOfRange",             // Level sensor is out of max range
   "pump/endCycle",                  // Indicate a pump start/stop cycle is completed
   "pump/warningRunTooLong",         // Dummy event Place holder
   "pump/debutDeCoulee",             // Dummy event Place holder
@@ -791,6 +791,7 @@ void PublishAll(){
     #endif
 
     #if PUMPMOTORDETECT
+      // Pour s'assurer que le dutycycle ne reste pas indéfiniment plus grand que zero à la fin d'une coulée
       // Si la coulée est toujours en cour et le compteur de temps ne fait pas d'overflow et que la pompe est arrêté
       // depuis plus longtemps que le cycle précédent alors on recalcule le dutycycle et on publie un nouvel événement.
       // On assume que le temps ON de la pompe est le même qu'au cycle précédent.
