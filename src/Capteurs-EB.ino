@@ -17,7 +17,7 @@ STARTUP(WiFi.selectAntenna(ANT_EXTERNAL));
 STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 
 // Firmware version et date
-#define FirmwareVersion "1.3.3"   // Version du firmware du capteur.
+#define FirmwareVersion "1.3.5"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
@@ -43,7 +43,7 @@ VEcTk -> DEVICE_CONF == 7
 */
 
 /********* Choisir la configuration de device à compiler *********/
-#define DEVICE_CONF 0
+#define DEVICE_CONF 3
 /*****************************************************************/
 
 /*Config for P1, P2, P3 -> DEVICE_CONF == 0
@@ -250,8 +250,8 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define delaisFinDeCoulee 3 * heure // Temps sans activité de la pompe pour décréter la fin de la couléé
 #define pumpONstate 0             // Pump signal is active low.
 #define pumpOFFstate 1            // Pump signal is active low.
-#define StartDSTtime 1520748000   //dim 11 mar, 02 h 00 = 1520748000
-#define EndDSTtime 1541314800     //dim 4 nov, 02 h 00 = 1541314800
+#define StartDSTtime 1552197600   //dim 10 mar, 02 h 00 = 1552197600 local time
+#define EndDSTtime 1572850800     //dim 4 nov, 02 h 00 = 1572850800 local time
 
 // Definition for vacuum transducer
 #define R1 18000                    // pressure xducer scaling resistor 1
@@ -292,7 +292,7 @@ String eventName[] = {
   "pump/T2",                        // Pump state. Pump stop
   "sensor/level",                   // Tank level. Post processing required for display
   "sensor/US100sensorTemp",         // Temperature read on the US100 senson
-  "sensor/outOfRange",             // Level sensor is out of max range
+  "sensor/outOfRange",              // Level sensor is out of max range
   "pump/endCycle",                  // Indicate a pump start/stop cycle is completed
   "pump/warningRunTooLong",         // Dummy event Place holder
   "pump/debutDeCoulee",             // Dummy event Place holder
@@ -311,7 +311,7 @@ String eventName[] = {
   "sensor/Valve2Pos",               // Valve 2 position string
   "pump/state",                     // Étant actuel de la pompe
   "pump/CurrentDutyCycle",          // Étant actuel du dutyCycle
-  "pump/T2_ONtime"               // Durée de marche de la pompe en millisecondes
+  "pump/T2_ONtime"                  // Durée de marche de la pompe en millisecondes
   };
 
 // Structure définissant un événement
@@ -664,9 +664,9 @@ void setup() {
   }
 #endif
 
-/*
+/*******************************************************************************
     Boucle principale
-*/
+*******************************************************************************/
 void loop(){
   unsigned long loopTime = millis();
 // Execute every nextSampleTime(6 seconds)) read all sensors and reset watchdog
