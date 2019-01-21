@@ -1,0 +1,733 @@
+0000007782 [hal.wlan] ERROR: wiced_join_ap_specific(), result: 1024
+0000007782 [hal.wlan] INFO: Joining PL-Net
+0000007783 [hal.wlan] TRACE: Free RAM connect: 43624
+0000008695 [hal.wlan] INFO: Bringing WiFi interface up with DHCP
+0000013539 [app] INFO: En attente... 
+.0000014539 [app] INFO: Connecté au nuage. :)
+0000015539 [app] INFO: (checkPtrState) - Checked readPtr --> was:178, now:178
+0000015539 [app] INFO: (checkPtrState) - Checked writePtr --> was:178, now:178
+0000015540 [app] INFO: (checkPtrState) - Checked buffLen --> was:0, now:0
+0000015892 [app] INFO: (initDS18B20Sensors) - DS18B20 trouvé: 1
+0000015892 [app] INFO: (initDS18B20Sensors) - Configuration de 1 ds18b20
+28 2A 92 A2 08 00 00 D8 
+0000015954 [app] INFO: (initDS18B20Sensors) - Device 0 Resolution: 9
+0000016015 [app] INFO: (initDS18B20Sensors) - Test device 0 enclosureThermometer = 26.000000
+0000016016 [app] INFO: (initDS18B20Sensors) - 
+0000018066 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/Valve1Pos
+0000018066 [app] INFO: (CheckValvePos) - Valve 1 position: 3, Partiel
+0000018117 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/Valve1Pos
+0000018118 [app] INFO: (CheckValvePos) - Valve 1 position: 3, Partiel
+0000018168 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/Valve2Pos
+0000018169 [app] INFO: (CheckValvePos) - Valve 2 position: 3, Partiel
+0000018219 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/Valve2Pos
+0000018220 [app] INFO: (CheckValvePos) - Valve 2 position: 3, Partiel
+0000018220 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: device/boot
+0000018221 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000018251 [app] INFO: BufferLen = 5, Cloud = true
+0000018251 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000018252 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20575,"generation": 1548089341,"timestamp": 1548104347,"timer": 18066,"eData":3,"eName": "sensor/Valve1Pos","replay":0}
+0000018253 [app] INFO: Publishing = 178, Status: Fait
+0000020253 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000020275 [app] INFO: BufferLen = 4, Cloud = true
+0000020275 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000020275 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20576,"generation": 1548089341,"timestamp": 1548104347,"timer": 18117,"eData":3,"eName": "sensor/Valve1Pos","replay":0}
+0000020276 [app] INFO: Publishing = 179, Status: Fait
+0000022277 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000022277 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000022338 [app] INFO: (ReadDistance_US100) - Dist.: 139mm, now= 22277, lastPublish= 18221, RSSI= 536884564
+0000022339 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/level
+0000022359 [app] INFO: BufferLen = 4, Cloud = true
+0000022360 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000022360 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20577,"generation": 1548089341,"timestamp": 1548104347,"timer": 18168,"eData":3,"eName": "sensor/Valve2Pos","replay":0}
+0000022362 [app] INFO: Publishing = 180, Status: Fait
+0000024362 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000024362 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000024441 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.500000
+0000024441 [app] INFO: BufferLen = 3, Cloud = true
+0000024442 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000024442 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20578,"generation": 1548089341,"timestamp": 1548104347,"timer": 18219,"eData":3,"eName": "sensor/Valve2Pos","replay":0}
+0000024443 [app] INFO: Publishing = 181, Status: Fait
+0000026444 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000026474 [app] INFO: (Readtemp_US100) - Temp. US100: 2C now= 26444, lastPublish= 22277
+0000026475 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/US100sensorTemp
+0000026476 [app] INFO: BufferLen = 3, Cloud = true
+0000026476 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000026476 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20579,"generation": 1548089341,"timestamp": 1548104347,"timer": 18220,"eData":0,"eName": "device/boot","replay":0}
+0000026478 [app] INFO: Publishing = 182, Status: Fait
+0000028478 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000028499 [app] INFO: BufferLen = 2, Cloud = true
+0000028499 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000028499 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20580,"generation": 1548089341,"timestamp": 1548104351,"timer": 22277,"eData":139,"eName": "sensor/level","replay":0}
+0000028501 [app] INFO: Publishing = 183, Status: Fait
+0000030501 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000030531 [app] INFO: BufferLen = 1, Cloud = true
+0000030532 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000030532 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20581,"generation": 1548089341,"timestamp": 1548104356,"timer": 26444,"eData":2,"eName": "sensor/US100sensorTemp","replay":~
+0000030534 [app] INFO: Publishing = 184, Status: Fait
+0000032534 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000034555 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000034555 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000034616 [app] INFO: (ReadDistance_US100) - Dist.: 279mm, now= 34555, lastPublish= 26444, RSSI= 536884564
+0000034617 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/level
+0000034638 [app] INFO: BufferLen = 1, Cloud = true
+0000034638 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000034639 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20582,"generation": 1548089341,"timestamp": 1548104364,"timer": 34555,"eData":279,"eName": "sensor/level","replay":0}
+0000034640 [app] INFO: Publishing = 185, Status: Fait
+0000036641 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000036641 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000036719 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000038720 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000038750 [app] INFO: (Readtemp_US100) - Temp. US100: 4C now= 38720, lastPublish= 34555
+0000038751 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/US100sensorTemp
+0000038751 [app] INFO: BufferLen = 1, Cloud = true
+0000038752 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000038752 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20583,"generation": 1548089341,"timestamp": 1548104368,"timer": 38720,"eData":4,"eName": "sensor/US100sensorTemp","replay":~
+0000038754 [app] INFO: Publishing = 186, Status: Fait
+0000040754 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000042775 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000044805 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000046826 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000046827 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000046888 [app] INFO: (ReadDistance_US100) - Dist.: 419mm, now= 46826, lastPublish= 38720, RSSI= 536884564
+0000046888 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/level
+0000046909 [app] INFO: BufferLen = 1, Cloud = true
+0000046909 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000046909 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20584,"generation": 1548089341,"timestamp": 1548104376,"timer": 46826,"eData":419,"eName": "sensor/level","replay":0}
+0000046911 [app] INFO: Publishing = 187, Status: Fait
+0000048911 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000048911 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000048949 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000050950 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000050980 [app] INFO: (Readtemp_US100) - Temp. US100: 6C now= 50950, lastPublish= 46826
+0000050980 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/US100sensorTemp
+0000050981 [app] INFO: BufferLen = 1, Cloud = true
+0000050981 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000050982 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20585,"generation": 1548089341,"timestamp": 1548104380,"timer": 50950,"eData":6,"eName": "sensor/US100sensorTemp","replay":~
+0000050983 [app] INFO: Publishing = 188, Status: Fait
+0000052983 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000055004 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000057034 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000059055 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000059056 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000059117 [app] INFO: (ReadDistance_US100) - Dist.: 560mm, now= 59055, lastPublish= 50950, RSSI= 536884564
+0000059118 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/level
+0000059138 [app] INFO: BufferLen = 4294967107, Cloud = true
+0000059138 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000059139 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20586,"generation": 1548089341,"timestamp": 1548104388,"timer": 59055,"eData":560,"eName": "sensor/level","replay":0}
+0000059140 [app] INFO: Publishing = 4294967295, Status: Fait
+0000061141 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000061141 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000061219 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000063220 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000063250 [app] INFO: (Readtemp_US100) - Temp. US100: 8C now= 63220, lastPublish= 59055
+0000063250 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/US100sensorTemp
+0000063251 [app] INFO: BufferLen = 1, Cloud = true
+0000063251 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000063252 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20587,"generation": 1548089341,"timestamp": 1548104392,"timer": 63220,"eData":8,"eName": "sensor/US100sensorTemp","replay":~
+0000063253 [app] INFO: Publishing = 0, Status: Fait
+0000065254 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000067274 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000069305 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000071326 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000071326 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000071388 [app] INFO: (ReadDistance_US100) - Dist.: 700mm, now= 71326, lastPublish= 63220, RSSI= 536884564
+0000071388 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/level
+0000071409 [app] INFO: BufferLen = 1, Cloud = true
+0000071409 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000071410 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20588,"generation": 1548089341,"timestamp": 1548104401,"timer": 71326,"eData":700,"eName": "sensor/level","replay":0}
+0000071411 [app] INFO: Publishing = 1, Status: Fait
+0000073412 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000073412 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000073491 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000075491 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000075521 [app] INFO: (Readtemp_US100) - Temp. US100: 10C now= 75491, lastPublish= 71326
+0000075522 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/US100sensorTemp
+0000075522 [app] INFO: BufferLen = 1, Cloud = true
+0000075523 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000075523 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20589,"generation": 1548089341,"timestamp": 1548104405,"timer": 75491,"eData":10,"eName": "sensor/US100sensorTemp","replay"~
+0000075525 [app] INFO: Publishing = 2, Status: Fait
+0000077525 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000079546 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000081576 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000083597 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000083598 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000083659 [app] INFO: (ReadDistance_US100) - Dist.: 840mm, now= 83597, lastPublish= 75491, RSSI= 536884564
+0000083659 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/level
+0000083680 [app] INFO: BufferLen = 1, Cloud = true
+0000083680 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000083681 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20590,"generation": 1548089341,"timestamp": 1548104413,"timer": 83597,"eData":840,"eName": "sensor/level","replay":0}
+0000083682 [app] INFO: Publishing = 3, Status: Fait
+0000085682 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000085683 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000085724 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000087725 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000087755 [app] INFO: (Readtemp_US100) - Temp. US100: 13C now= 87725, lastPublish= 83597
+0000087755 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/US100sensorTemp
+0000087756 [app] INFO: BufferLen = 1, Cloud = true
+0000087756 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000087757 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20591,"generation": 1548089341,"timestamp": 1548104417,"timer": 87725,"eData":13,"eName": "sensor/US100sensorTemp","replay"~
+0000087758 [app] INFO: Publishing = 4, Status: Fait
+0000089758 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000091779 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000093809 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000095831 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000095831 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000095892 [app] INFO: (ReadDistance_US100) - Dist.: 981mm, now= 95831, lastPublish= 87725, RSSI= 536884564
+0000095893 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/level
+0000095913 [app] INFO: BufferLen = 1, Cloud = true
+0000095914 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000095914 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20592,"generation": 1548089341,"timestamp": 1548104425,"timer": 95831,"eData":981,"eName": "sensor/level","replay":0}
+0000095915 [app] INFO: Publishing = 5, Status: Fait
+0000097916 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000097916 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000097994 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000099995 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000100025 [app] INFO: (Readtemp_US100) - Temp. US100: 15C now= 99995, lastPublish= 95831
+0000100026 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/US100sensorTemp
+0000100026 [app] INFO: BufferLen = 1, Cloud = true
+0000100026 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000100027 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20593,"generation": 1548089341,"timestamp": 1548104429,"timer": 99995,"eData":15,"eName": "sensor/US100sensorTemp","replay"~
+0000100028 [app] INFO: Publishing = 6, Status: Fait
+0000102029 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000104049 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000106080 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000108101 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000108101 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000108163 [app] INFO: (ReadDistance_US100) - Dist.: 1120mm, now= 108101, lastPublish= 99995, RSSI= 536884564
+0000108163 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/level
+0000108184 [app] INFO: BufferLen = 1, Cloud = true
+0000108184 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000108184 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20594,"generation": 1548089341,"timestamp": 1548104437,"timer": 108101,"eData":1120,"eName": "sensor/level","replay":0}
+0000108186 [app] INFO: Publishing = 7, Status: Fait
+0000110186 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000110186 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000110223 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000112224 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000112254 [app] INFO: (Readtemp_US100) - Temp. US100: 17C now= 112224, lastPublish= 108101
+0000112255 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/US100sensorTemp
+0000112255 [app] INFO: BufferLen = 1, Cloud = true
+0000112256 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000112256 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20595,"generation": 1548089341,"timestamp": 1548104441,"timer": 112224,"eData":17,"eName": "sensor/US100sensorTemp","replay~
+0000112257 [app] INFO: Publishing = 8, Status: Fait
+0000114258 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000116278 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000118309 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000120330 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000120330 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000120391 [app] INFO: (ReadDistance_US100) - Dist.: 1261mm, now= 120330, lastPublish= 112224, RSSI= 536884564
+0000120392 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/level
+0000120413 [app] INFO: BufferLen = 1, Cloud = true
+0000120413 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000120413 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20596,"generation": 1548089341,"timestamp": 1548104450,"timer": 120330,"eData":1261,"eName": "sensor/level","replay":0}
+0000120415 [app] INFO: Publishing = 9, Status: Fait
+0000122415 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000122416 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000122508 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000124508 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000124539 [app] INFO: (Readtemp_US100) - Temp. US100: 19C now= 124508, lastPublish= 120330
+0000124539 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/US100sensorTemp
+0000124540 [app] INFO: BufferLen = 1, Cloud = true
+0000124540 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000124540 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20597,"generation": 1548089341,"timestamp": 1548104454,"timer": 124508,"eData":19,"eName": "sensor/US100sensorTemp","replay~
+0000124542 [app] INFO: Publishing = 10, Status: Fait
+0000126542 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000128563 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000130593 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000132614 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000132615 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000132676 [app] INFO: (ReadDistance_US100) - Dist.: 1401mm, now= 132614, lastPublish= 124508, RSSI= 536884564
+0000132676 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/level
+0000132697 [app] INFO: BufferLen = 1, Cloud = true
+0000132697 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000132698 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20598,"generation": 1548089341,"timestamp": 1548104462,"timer": 132614,"eData":1401,"eName": "sensor/level","replay":0}
+0000132699 [app] INFO: Publishing = 11, Status: Fait
+0000134700 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000134700 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000134779 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.500000
+0000136779 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000136809 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 136779, lastPublish= 132614
+0000136810 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/US100sensorTemp
+0000136810 [app] INFO: BufferLen = 1, Cloud = true
+0000136811 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000136811 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20599,"generation": 1548089341,"timestamp": 1548104466,"timer": 136779,"eData":21,"eName": "sensor/US100sensorTemp","replay~
+0000136813 [app] INFO: Publishing = 12, Status: Fait
+0000138813 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000140833 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000142864 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000144885 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000144886 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000144947 [app] INFO: (ReadDistance_US100) - Dist.: 1401mm, now= 144885, lastPublish= 136779, RSSI= 536884564
+0000146968 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000146968 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000147046 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.500000
+0000149047 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000149077 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 149047, lastPublish= 136779
+0000151078 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000153098 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000155129 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000157150 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000157150 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000157211 [app] INFO: (ReadDistance_US100) - Dist.: 1401mm, now= 157150, lastPublish= 136779, RSSI= 536884564
+0000159232 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000159232 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000159310 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000161311 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000161341 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 161311, lastPublish= 136779
+0000163342 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000165362 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000167393 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000169414 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000169414 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000169476 [app] INFO: (ReadDistance_US100) - Dist.: 1402mm, now= 169414, lastPublish= 136779, RSSI= 536884564
+0000171496 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000171497 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000171575 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000173575 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000173606 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 173575, lastPublish= 136779
+0000175606 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000177627 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000179657 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000181679 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000181679 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000181740 [app] INFO: (ReadDistance_US100) - Dist.: 1401mm, now= 181679, lastPublish= 136779, RSSI= 536884564
+0000183761 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000183761 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000183839 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000185840 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000185870 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 185840, lastPublish= 136779
+0000187871 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000189891 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000191922 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000193943 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000193943 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000194005 [app] INFO: (ReadDistance_US100) - Dist.: 1401mm, now= 193943, lastPublish= 136779, RSSI= 536884564
+0000196025 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000196026 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000196104 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000198104 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000198134 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 198104, lastPublish= 136779
+0000200135 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000202156 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000204186 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000206207 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000206208 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000206269 [app] INFO: (ReadDistance_US100) - Dist.: 1408mm, now= 206207, lastPublish= 136779, RSSI= 536884564
+0000206270 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/level
+0000206290 [app] INFO: BufferLen = 1, Cloud = true
+0000206290 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000206291 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20600,"generation": 1548089341,"timestamp": 1548104535,"timer": 206207,"eData":1408,"eName": "sensor/level","replay":0}
+0000206292 [app] INFO: Publishing = 13, Status: Fait
+0000208292 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000208293 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000208371 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000210372 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000210402 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 210372, lastPublish= 206207
+0000212403 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000214423 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000216454 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000218475 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000218475 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000218536 [app] INFO: (ReadDistance_US100) - Dist.: 1408mm, now= 218475, lastPublish= 206207, RSSI= 536884564
+0000220557 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000220557 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000220635 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000222636 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000222666 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 222636, lastPublish= 206207
+0000224667 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000226687 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000228718 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000230739 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000230739 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000230801 [app] INFO: (ReadDistance_US100) - Dist.: 1408mm, now= 230739, lastPublish= 206207, RSSI= 536884564
+0000232821 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000232822 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000232900 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.500000
+0000234900 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000234931 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 234900, lastPublish= 206207
+0000236931 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000238952 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000240982 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000243004 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000243004 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000243065 [app] INFO: (ReadDistance_US100) - Dist.: 1408mm, now= 243004, lastPublish= 206207, RSSI= 536884564
+0000245086 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000245086 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000245164 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000247165 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000247195 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 247165, lastPublish= 206207
+0000249196 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000251216 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000253247 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000255268 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000255268 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000255330 [app] INFO: (ReadDistance_US100) - Dist.: 1408mm, now= 255268, lastPublish= 206207, RSSI= 536884564
+0000257350 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000257351 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000257415 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000259416 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000259446 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 259416, lastPublish= 206207
+0000261447 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000263467 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000265498 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000267519 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000267519 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000267580 [app] INFO: (ReadDistance_US100) - Dist.: 1408mm, now= 267519, lastPublish= 206207, RSSI= 536884564
+0000269601 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000269601 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000269680 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.500000
+0000271681 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000271711 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 271681, lastPublish= 206207
+0000273711 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000275732 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000277762 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000279784 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000279784 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000279845 [app] INFO: (ReadDistance_US100) - Dist.: 1409mm, now= 279784, lastPublish= 206207, RSSI= 536884564
+0000281866 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000281867 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000281917 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.500000
+0000283918 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000283948 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 283918, lastPublish= 206207
+0000285949 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000287969 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000290000 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000292021 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000292021 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000292083 [app] INFO: (ReadDistance_US100) - Dist.: 1408mm, now= 292021, lastPublish= 206207, RSSI= 536884564
+0000294104 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000294104 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000294182 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000296182 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000296213 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 296182, lastPublish= 206207
+0000298213 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000300234 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000300264 [app] INFO: (PublishAll) - Time to publish: (now - lastAllPublish)= 300264 maxPubDelay_ms= 300000
+0000300265 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/level
+0000300266 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/US100sensorTemp
+0000300266 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/enclosureTemp
+0000300317 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/Valve1Pos
+0000300317 [app] INFO: (CheckValvePos) - Valve 1 position: 3, Partiel
+0000300368 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/Valve1Pos
+0000300368 [app] INFO: (CheckValvePos) - Valve 1 position: 3, Partiel
+0000300418 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/Valve2Pos
+0000300419 [app] INFO: (CheckValvePos) - Valve 2 position: 3, Partiel
+0000300469 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/Valve2Pos
+0000300470 [app] INFO: (CheckValvePos) - Valve 2 position: 3, Partiel
+0000300470 [app] INFO: BufferLen = 7, Cloud = true
+0000300471 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000300471 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20601,"generation": 1548089341,"timestamp": 1548104629,"timer": 300264,"eData":1408,"eName": "sensor/level","replay":0}
+0000300473 [app] INFO: Publishing = 14, Status: Fait
+0000302273 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000302294 [app] INFO: BufferLen = 6, Cloud = true
+0000302294 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000302295 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20602,"generation": 1548089341,"timestamp": 1548104629,"timer": 300264,"eData":21,"eName": "sensor/US100sensorTemp","replay~
+0000302296 [app] INFO: Publishing = 15, Status: Fait
+0000304296 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000304297 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000304358 [app] INFO: (ReadDistance_US100) - Dist.: 1408mm, now= 304296, lastPublish= 206207, RSSI= 536884564
+0000304379 [app] INFO: BufferLen = 5, Cloud = true
+0000304379 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000304380 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20603,"generation": 1548089341,"timestamp": 1548104629,"timer": 300264,"eData":26,"eName": "sensor/enclosureTemp","replay":~
+0000304381 [app] INFO: Publishing = 16, Status: Fait
+0000306382 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000306382 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000306461 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000306461 [app] INFO: BufferLen = 4, Cloud = true
+0000306462 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000306462 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20604,"generation": 1548089341,"timestamp": 1548104629,"timer": 300317,"eData":3,"eName": "sensor/Valve1Pos","replay":0}
+0000306464 [app] INFO: Publishing = 17, Status: Fait
+0000308464 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000308494 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 308464, lastPublish= 206207
+0000308495 [app] INFO: BufferLen = 3, Cloud = true
+0000308496 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000308496 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20605,"generation": 1548089341,"timestamp": 1548104630,"timer": 300367,"eData":3,"eName": "sensor/Valve1Pos","replay":0}
+0000308498 [app] INFO: Publishing = 18, Status: Fait
+0000310498 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000310518 [app] INFO: BufferLen = 2, Cloud = true
+0000310519 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000310519 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20606,"generation": 1548089341,"timestamp": 1548104630,"timer": 300418,"eData":3,"eName": "sensor/Valve2Pos","replay":0}
+0000310520 [app] INFO: Publishing = 19, Status: Fait
+0000312521 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000312551 [app] INFO: BufferLen = 1, Cloud = true
+0000312551 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000312552 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20607,"generation": 1548089341,"timestamp": 1548104630,"timer": 300469,"eData":3,"eName": "sensor/Valve2Pos","replay":0}
+0000312553 [app] INFO: Publishing = 20, Status: Fait
+0000314554 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000316575 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000316575 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000316637 [app] INFO: (ReadDistance_US100) - Dist.: 1408mm, now= 316575, lastPublish= 206207, RSSI= 536884564
+0000318657 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000318658 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000318736 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000320736 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000320767 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 320736, lastPublish= 206207
+0000322768 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000324788 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000326819 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000328840 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000328840 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000328901 [app] INFO: (ReadDistance_US100) - Dist.: 1400mm, now= 328840, lastPublish= 206207, RSSI= 536884564
+0000328902 [app] INFO: (pushToPublishQueue) - >>>> pushToPublishQueue::: sensor/level
+0000328922 [app] INFO: BufferLen = 1, Cloud = true
+0000328922 [app] INFO: (publishQueuedEvents) - < publishQueuedEvents:::
+0000328923 [app] INFO: (makeJSON) - makeJSON: {"noSerie": 20608,"generation": 1548089341,"timestamp": 1548104658,"timer": 328840,"eData":1400,"eName": "sensor/level","replay":0}
+0000328924 [app] INFO: Publishing = 21, Status: Fait
+0000330924 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000330925 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000331003 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000333004 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000333034 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 333004, lastPublish= 328840
+0000335035 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000337055 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000339086 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000341107 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000341107 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000341168 [app] INFO: (ReadDistance_US100) - Dist.: 1398mm, now= 341107, lastPublish= 328840, RSSI= 536884564
+0000343189 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000343189 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000343268 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000345268 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000345298 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 345268, lastPublish= 328840
+0000347299 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000349319 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000351350 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000353371 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000353371 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000353433 [app] INFO: (ReadDistance_US100) - Dist.: 1399mm, now= 353371, lastPublish= 328840, RSSI= 536884564
+0000355454 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000355454 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000355532 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000357532 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000357563 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 357532, lastPublish= 328840
+0000359563 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000361584 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000363614 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000365636 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000365636 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000365697 [app] INFO: (ReadDistance_US100) - Dist.: 1399mm, now= 365636, lastPublish= 328840, RSSI= 536884564
+0000367718 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000367718 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000367796 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.500000
+0000369797 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000369827 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 369797, lastPublish= 328840
+0000371828 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000373848 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000375879 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000377900 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000377900 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000377962 [app] INFO: (ReadDistance_US100) - Dist.: 1398mm, now= 377900, lastPublish= 328840, RSSI= 536884564
+0000379982 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000379983 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000380061 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.500000
+0000382061 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000382092 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 382061, lastPublish= 328840
+0000384092 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000386113 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000388143 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000390164 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000390165 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000390226 [app] INFO: (ReadDistance_US100) - Dist.: 1398mm, now= 390164, lastPublish= 328840, RSSI= 536884564
+0000392247 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000392247 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000392325 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000
+0000394326 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 2
+0000394356 [app] INFO: (Readtemp_US100) - Temp. US100: 21C now= 394326, lastPublish= 328840
+0000396357 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 3
+0000398377 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 4
+0000400408 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 5
+0000402429 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 0
+0000402429 [app] INFO: (ReadDistance_US100) - Distance meas routine: ReadDistance_US100
+0000402490 [app] INFO: (ReadDistance_US100) - Dist.: 1398mm, now= 402429, lastPublish= 328840, RSSI= 536884564
+0000404511 [app] INFO: 
+(readSelectedSensors) - Now reading sensorNo: 1
+0000404512 [app] INFO: (readDS18b20temp) - lecture de 1 capteur
+0000404590 [app] INFO: (readDS18b20temp) - DS18b20 interne: 26.000000

@@ -17,7 +17,7 @@ STARTUP(WiFi.selectAntenna(ANT_EXTERNAL));
 STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 
 // Firmware version et date
-#define FirmwareVersion "1.3.5"   // Version du firmware du capteur.
+#define FirmwareVersion "1.3.6"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
@@ -228,8 +228,8 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 
 // General definitions
 #define second 1000UL             // 1000 millisecond per sesond
-#define minute 60 * second        // 60000 millisecond per minute
-#define heure 60 * minute         // 3600000 millisecond par heure
+#define minute 60000UL            // 60000 millisecond per minute
+#define heure 3600000UL           // 3600000 millisecond par heure
 #define unJourEnMillis (24 * 60 * 60 * second)
 #define debounceDelay 50          // Debounce time for valve position readswitch
 #define fastSampling  6000UL      // in milliseconds
@@ -244,14 +244,14 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define DallasSensorResolution 9  // Résolution de lecture de température
 #define MaxHeatingPowerPercent 90 // Puissance maximale appliqué sur la résistance de chauffage
 #define HeatingSetPoint 20        // Température cible à l'intérieur du boitier
-#define DefaultPublishDelay 5     // Interval de publication en minutes par défaut
+#define DefaultPubDelay 5     // Interval de publication en minutes par défaut
 #define TimeoutDelay 6 * slowSampling // Device watch dog timer time limit
 #define pumpRunTimeLimit 3 * minute // Maximum pump run time before a warning is issued
 #define delaisFinDeCoulee 3 * heure // Temps sans activité de la pompe pour décréter la fin de la couléé
 #define pumpONstate 0             // Pump signal is active low.
 #define pumpOFFstate 1            // Pump signal is active low.
-#define StartDSTtime 1552197600   //dim 10 mar, 02 h 00 = 1552197600 local time
-#define EndDSTtime 1572850800     //dim 4 nov, 02 h 00 = 1572850800 local time
+#define StartDSTtime 1552197600   //dim 10 mar 2019, 02 h 00 = 1552197600 local time
+#define EndDSTtime 1572850800     //dim 4 nov 2019, 02 h 00 = 1572850800 local time
 
 // Definition for vacuum transducer
 #define R1 18000                    // pressure xducer scaling resistor 1
@@ -420,8 +420,8 @@ unsigned long lastRunWarning = millis();
 char publishString[buffSize];
 retained time_t newGenTimestamp = 0;
 retained uint32_t noSerie = 0; //Mettre en Backup RAM
-int maxPublishInterval = DefaultPublishDelay;
-volatile unsigned long maxPublishDelay_ms = maxPublishInterval * minute;
+int maxPublishInterval = DefaultPubDelay;
+volatile unsigned long maxPubDelay_ms = maxPublishInterval * minute;
 int pumpEvent = 0;
 bool connWasLost = false;
 
@@ -441,7 +441,7 @@ bool connWasLost = false;
 String myDeviceName = "";
 void nameHandler(const char *topic, const char *data) {
   myDeviceName =  String(data);
-  /*Serial.println("received " + String(topic) + ": " + String(data));*/
+  /*Log.info("received " + String(topic) + ": " + String(data));*/
 }
 
 /*
@@ -496,15 +496,24 @@ class ExternalRGB {
 // function to print a device address
   void printAddress(DeviceAddress deviceAddress)
   {
-    for (uint8_t i = 0; i < 8; i++)
-    {
-      if (deviceAddress[i] < 16) Serial.print("0");
-      Serial.print(deviceAddress[i], HEX);
-      Serial.print(" ");
-    }
-    Serial.println();
+      for (uint8_t i = 0; i < 8; i++)
+      {
+        if (deviceAddress[i] < 16) Serial.print("0");
+        Serial.print(deviceAddress[i], HEX);
+        Serial.print(" ");
+      }
+      Serial.println();
   }
 #endif
+
+/* Define a log handler on Serial1 for log messages */
+SerialLogHandler logHandler(115200, LOG_LEVEL_TRACE, {   // Logging level for non-application messages
+    { "app", LOG_LEVEL_INFO }                      // Logging level for application messages
+});
+
+/*******************************************************************************
+    Setup Routine
+*******************************************************************************/
 
 void setup() {
   // Initialisation des pin I/O
@@ -538,7 +547,7 @@ void setup() {
         Serial1.begin(9600);  // Le capteur US-100 fonctionne à 9600 baud
     #endif
 // Enregistrement des fonctions et variables disponible par le nuage
-    Serial.println("Enregistrement des variables et fonctions\n");
+    Log.info("Enregistrement des variables et fonctions\n");
     Particle.variable("Version", FirmwareVersion);
     Particle.variable("Date", FirmwareDate);
     Particle.variable("config", config);
@@ -578,7 +587,7 @@ void setup() {
                                 // On peut utiliser la pin RX pour contrôler son fonctionnement
                                 // RX = LOW pour arrêter le capteur, RX = HIGH pour le démarrer
       distSensorName = "MB7389";
-      Serial.println(" $$$$$$$ Set distSensorName to MB7389");
+      Log.info(" $$$$$$$ Set distSensorName to MB7389");
     #endif
 
     delay(300UL); // Pour partir le moniteur série pour débug
@@ -588,15 +597,15 @@ void setup() {
     delay(3000); // Pour partir le moniteur série
 
 // Attendre la connection au nuage
-    Serial.println("En attente... ");
+    Log.info("En attente... ");
     if (waitFor(Particle.connected, 10000)) {
       delay(1000);
       Serial.print(".");
     }
     if(Particle.connected()){
-        Serial.println("Connecté au nuage. :)");
+        Log.info("Connecté au nuage. :)");
     } else {
-        Serial.println("Pas de connexion au nuage. :( ");
+        Log.info("Pas de connexion au nuage. :( ");
     }
 
     delay(1000UL);
@@ -635,7 +644,7 @@ void setup() {
 /*
     Le capteur de distance MB7389 fonctionne en continu.
     Cette routine reçoit les données séries et met le résultats dans une variable
-     Pour utilisation par la routine de measure
+    Pour utilisation par la routine de measure
 */
 
 #if DISTANCESENSOR == MB7389
@@ -653,7 +662,7 @@ void setup() {
       if (c == CR){
           MB7389Valid = false;
           MB7389latestReading = Dist_MB7389Str.toInt();
-          //Serial.println("Dist_MB7389Str= " + Dist_MB7389Str);
+          //Log.info("Dist_MB7389Str= " + Dist_MB7389Str);
           return;
        }
 
@@ -678,7 +687,7 @@ void loop(){
     /*delay(20UL);  // Just to have a visible flash on the LED*/
     digitalWrite(led, HIGH); // Pour indiqué la fin de la prise de mesure
     timeLastUnit = loopTime;
-    /*Serial.printlnf("*** Loop No. %d end. Loop time is:<<<<< %d >>>>>", samplingIntervalCnt, millis() - loopTime);*/
+    /*Log.info("*** Loop No. %d end. Loop time is:<< %d >>", samplingIntervalCnt, millis() - loopTime);*/
     if (samplingIntervalCnt == 5){
       samplingIntervalCnt = 0;
     } else {
@@ -688,8 +697,11 @@ void loop(){
   delay(200UL);
 }
 
+/*******************************************************************************
+    PublishAll routine
+*******************************************************************************/
 void PublishAll(){
-  // Publie au moins une fois à tous les "maxPublishDelay_ms" millisecond
+  // Publie au moins une fois à tous les "maxPubDelay_ms" millisecond
   now = millis();
 
   #if HASVALVES
@@ -727,7 +739,7 @@ void PublishAll(){
           pushToPublishQueue(evPompe_T2_ONtime, T_ON, now);
         }
 
-        Serial.printlnf("T0= %d, T1= %d, T2= %d, dutyCycle : %.3f", T0, T1, T2, dutyCycle);
+        Log.info("T0= %d, T1= %d, T2= %d, dutyCycle : %.3f", T0, T1, T2, dutyCycle);
         T0 = T2;
         #if (DEVICE_CONF == 0) // Événement pour les pompes 1 2 et 3 seulement
           pushToPublishQueue(evPumpEndCycle, (int)(dutyCycle * 1000), changeTime);
@@ -760,8 +772,10 @@ void PublishAll(){
     #endif
 
   #endif
-  // Publish all every maxPublishDelay_ms
-  if (now - lastAllPublish > maxPublishDelay_ms){
+  // Publish all every maxPubDelay_ms
+  if (now - lastAllPublish > maxPubDelay_ms){
+
+    Log.info("(PublishAll) - Time to publish: (now - lastAllPublish)= %u maxPubDelay_ms= %u", now - lastAllPublish, maxPubDelay_ms);
     lastAllPublish = now;
 
     #if DISTANCESENSOR == US100
@@ -811,33 +825,36 @@ void PublishAll(){
 // Synchronisation du temps avec Particle Cloud une fois par jour
   if (millis() - lastRTCSync > unJourEnMillis) {
       Particle.syncTime();
-      Serial.printlnf("Synchronisation du temps avec le nuage de Particle");
+      Log.info("Synchronisation du temps avec le nuage de Particle");
       lastRTCSync = millis();
       if (!Time.isDST() && Time.now() >= StartDSTtime){
         Time.beginDST();
-        Serial.printlnf("Début de l'heure avancé");
+        Log.info("Début de l'heure avancé");
       } else if (Time.isDST() && Time.now() >= EndDSTtime){
         Time.endDST();
-        Serial.printlnf("Fin de l'heure avancé");
+        Log.info("Fin de l'heure avancé");
       }
   }
 // Publier les événements se trouvant dans le buffer
   if(buffLen > 0){
-    Serial.printlnf("BufferLen = %u, Cloud = %s", buffLen, (Particle.connected() ? "true" : "false")); // Pour debug
+    Log.info("BufferLen = %u, Cloud = %s", buffLen, (Particle.connected() ? "true" : "false")); // Pour debug
     bool success = publishQueuedEvents();
-    Serial.printlnf("Publishing = %u, Status: %s", readPtr - 1, (success ? "Fait" : "Pas Fait")); // Pour debug
+    Log.info("Publishing = %u, Status: %s", readPtr - 1, (success ? "Fait" : "Pas Fait")); // Pour debug
   } else if (replayBuffLen > 0){
     bool success = replayQueuedEvents();
-    Serial.printlnf("replayBuffLen = %u, Replay = %u, Status: %s", replayBuffLen, replayPtr, (success ? "Fait" : "Pas Fait"));
+    Log.info("replayBuffLen = %u, Replay = %u, Status: %s", replayBuffLen, replayPtr, (success ? "Fait" : "Pas Fait"));
   }
 }
 
-// Read the sensors attached to the device
-// If no sensor is present, the compiler substitute a delay of 20ms to get a visible flash on the activity led
+//*******************************************************************************
+//  readSelectedSensors routine
+//  Read the sensors attached to the device
+//  If no sensor is present, the compiler substitute a delay of 20ms to get a visible flash on the activity led
+//*******************************************************************************
 void readSelectedSensors(int sensorNo) {
   now = millis();
+  Log.info("\n(readSelectedSensors) - Now reading sensorNo: %d", sensorNo);
 
-  // SYNTAX
   switch (sensorNo)
   {
     case 0:
@@ -851,6 +868,8 @@ void readSelectedSensors(int sensorNo) {
 
       #if DISTANCESENSOR == MB7389
         ReadDistance_MB7389();
+      #else
+        delay(20UL);  // Just to have a visible flash on the LED
       #endif
       break;
 
@@ -895,8 +914,8 @@ void readSelectedSensors(int sensorNo) {
       break;
 
     // default:
-    // Pour permettre la modification de maxPublishDelay_ms par le nuage
-      maxPublishDelay_ms = maxPublishInterval * minute;
+    // Pour permettre la modification de maxPubDelay_ms par le nuage
+      maxPubDelay_ms = maxPublishInterval * minute;
   }
 }
 
@@ -909,42 +928,42 @@ void readSelectedSensors(int sensorNo) {
     delay(300);
     ds18b20Count = ds18b20Sensors.getDeviceCount();
     ds18b20Sensors.setWaitForConversion(true);
-    Serial.printlnf("DS18B20 trouvé: %d", ds18b20Count);
+    Log.info("(initDS18B20Sensors) - DS18B20 trouvé: %d", ds18b20Count);
 
     if (ds18b20Count == 1){
-        Serial.println("Configuration de 1 ds18b20");
+        Log.info("(initDS18B20Sensors) - Configuration de 1 ds18b20");
 
         ds18b20Sensors.getAddress(enclosureThermometer, 0);
         printAddress(enclosureThermometer);
         ds18b20Sensors.setResolution(enclosureThermometer, DallasSensorResolution);
-        Serial.printlnf("Device 0 Resolution: %d", ds18b20Sensors.getResolution(enclosureThermometer));
+        Log.info("(initDS18B20Sensors) - Device 0 Resolution: %d", ds18b20Sensors.getResolution(enclosureThermometer));
         ds18b20Sensors.requestTemperaturesByAddress(enclosureThermometer); //requête de lecture
         insideTempC = ds18b20Sensors.getTempC(enclosureThermometer);
-        Serial.printlnf("Test device 0 enclosureThermometer = %f", insideTempC);
+        Log.info("(initDS18B20Sensors) - Test device 0 enclosureThermometer = %f", insideTempC);
 
     } else if (ds18b20Count == 2){
-        Serial.println("Configuration de 2 ds18b20");
+        Log.info("(initDS18B20Sensors) - Configuration de 2 ds18b20");
 
         ds18b20Sensors.getAddress(enclosureThermometer, 0); // capteur Index 0
         printAddress(enclosureThermometer);
         ds18b20Sensors.setResolution(enclosureThermometer, DallasSensorResolution);
-        Serial.printlnf("Device 0 Resolution: %d", ds18b20Sensors.getResolution(enclosureThermometer));
+        Log.info("(initDS18B20Sensors) - Device 0 Resolution: %d", ds18b20Sensors.getResolution(enclosureThermometer));
         ds18b20Sensors.requestTemperaturesByAddress(enclosureThermometer); //requête de lecture
         insideTempC = ds18b20Sensors.getTempC(enclosureThermometer);
-        Serial.printlnf("Test device 0 enclosureThermometer = %f", insideTempC);
+        Log.info("(initDS18B20Sensors) - Test device 0 enclosureThermometer = %f", insideTempC);
 
         ds18b20Sensors.getAddress(outsideThermometer, 1); // capteur Index 1
         printAddress(outsideThermometer);
         ds18b20Sensors.setResolution(outsideThermometer, DallasSensorResolution);
-        Serial.printlnf("Device 1 Resolution: %d", ds18b20Sensors.getResolution(outsideThermometer));
+        Log.info("(initDS18B20Sensors) - Device 1 Resolution: %d", ds18b20Sensors.getResolution(outsideThermometer));
         ds18b20Sensors.requestTemperaturesByAddress(outsideThermometer); //requête de lecture
         outsideTempC = ds18b20Sensors.getTempC(outsideThermometer);
-        Serial.printlnf("Test device 1 outsideThermometer = %f", outsideTempC);
+        Log.info("(initDS18B20Sensors) - Test device 1 outsideThermometer = %f", outsideTempC);
 
         pushToPublishQueue(evEnclosureTemp, (int) insideTempC, now);
         pushToPublishQueue(evAmbientTemp, (int) outsideTempC, now);
     }
-    Serial.println();
+    Log.info("(initDS18B20Sensors) - ");
     delay(2000UL);
   }
 #endif
@@ -954,7 +973,7 @@ void readSelectedSensors(int sensorNo) {
   void ReadDistance_US100(){
       distSensorName = "US100";
       unsigned int currentReading;
-      Serial.println("Distance meas routine: ReadDistance_US100");
+      Log.info("(ReadDistance_US100) - Distance meas routine: ReadDistance_US100");
       Serial1.begin(9600);  // Le capteur US-100 fonctionne à 9600 baud
       Serial1.write(0X55);                            // trig US-100 begin to measure the distance
       delay(60UL);                                     // delay 20ms to wait result
@@ -967,7 +986,7 @@ void readSelectedSensors(int sensorNo) {
           rawDistmm = currentReading;
           if((currentReading > 1) && (currentReading < maxRangeUS100)){       // normal distance should between 1mm and 2500 mm (1mm, 2,5m)
               dist_mm = AvgDistReading(currentReading); // Average the distance readings
-              Serial.printlnf("Dist.: %dmm, now= %d, lastPublish= %d, RSSI= %d", (int)(dist_mm / numReadings), now, lastPublish, WiFi.RSSI());
+              Log.info("(ReadDistance_US100) - Dist.: %dmm, now= %d, lastPublish= %d, RSSI= %d", (int)(dist_mm / numReadings), now, lastPublish, WiFi.RSSI());
               if (abs(dist_mm - prev_dist_mm) > minDistChange){         // Publish event in case of a change in temperature
                   lastPublish = now;                               // reset the max publish delay counter.
                   pushToPublishQueue(evDistance, (int)(dist_mm / numReadings), now);
@@ -978,13 +997,12 @@ void readSelectedSensors(int sensorNo) {
           } else {
               /*Particle.publish("Hors portée: ","9999",60,PRIVATE);*/
               pushToPublishQueue(evOutOfRange, 9999, now);
-              Serial.print("Hors portée: ");             // output distance to serial monitor
-              Serial.print(currentReading, DEC);
-              Serial.println("mm ");
+              Log.info("(ReadDistance_US100) - Hors portée: ");             // output distance to serial monitor
+              Log.info("(ReadDistance_US100) - currentReading %d mm", currentReading);
               delay(2000);
           }
       } else {
-          Serial.println("Données non disponible");
+          Log.info("(ReadDistance_US100) - Données non disponible");
       }
       Serial1.end();  // Le capteur US-100 fonctionne à 9600 baud
   }
@@ -1002,7 +1020,7 @@ void readSelectedSensors(int sensorNo) {
           if((Temp45 > 1) && (Temp45 < 130))   // Vérifier si la valeur est acceptable
           {
               TempUS100 = AvgTempReading(Temp45 - 45); //Conversion en température réelle et filtrage
-              Serial.printlnf("Temp. US100: %dC now= %d, lastPublish= %d",  (int)(TempUS100/ numReadings), now, lastPublish); // Pour debug
+              Log.info("(Readtemp_US100) - Temp. US100: %dC now= %d, lastPublish= %d",  (int)(TempUS100/ numReadings), now, lastPublish); // Pour debug
               if (abs(TempUS100 - prev_TempUS100) > minTempChange){    // Vérifier s'il y a eu changement depuis la dernière publication
                       lastPublish = now;                     // Remise à zéro du compteur de délais de publication
                       pushToPublishQueue(evUS100Temperature, (int)(TempUS100 / numReadings), now); //Publication
@@ -1017,7 +1035,8 @@ void readSelectedSensors(int sensorNo) {
 #endif
 
 #if HASUS100THERMISTOR
-// Cette routine lit la température sur le capteur thermistor du boitier US-100 robuste.
+// Cette routine lit la température sur le capteur thermistor du
+// ##### boitier US-100 robuste #####.
 // Note: La valeur 45 DOIT être soustraite pour obtenir la température réelle.
 void ReadTherm_US100(){
     int Therm45 = 0;
@@ -1030,7 +1049,7 @@ void ReadTherm_US100(){
         if((Therm45 > 0) && (Therm45 < 255))   // Vérifier si la valeur est acceptable
         {
             TempThermUS100 = (Therm45 - 45); // Conversion en température réelle
-            Serial.printlnf("Temp. thermistor: %dC now= %d",  (byte)(Therm45 - 45), now); // Pour debug
+            Log.info("(ReadTherm_US100) -Temp. thermistor: %dC now= %d",  (byte)(Therm45 - 45), now); // Pour debug
         }
     }
     Serial1.end();  // Le capteur US-100 fonctionne à 9600 baud
@@ -1041,12 +1060,12 @@ void ReadTherm_US100(){
 // Cette routine mesure la distance entre la surface de l'eau et le capteur ultason
   void ReadDistance_MB7389(){
       unsigned int currentReading = MB7389latestReading;
-      Serial.println("Distance meas routine: ReadDistance_MB7389");
-      Serial.printlnf("MB7389latestReading: %d", MB7389latestReading);
+      Log.info("(ReadDistance_MB7389) - Distance meas routine: ReadDistance_MB7389");
+      Log.info("(ReadDistance_MB7389) - MB7389latestReading: %d", MB7389latestReading);
       rawDistmm = currentReading;
       if((currentReading > 1) && (currentReading < maxRangeMB7389)){       // normal distance should between 1mm and 2500 mm (1mm, 2,5m)
           dist_mm = AvgDistReading(currentReading); // Average the distance readings
-          Serial.printlnf("Dist.: %dmm, now= %d, lastPublish= %d, RSSI= %d", (int)(dist_mm / numReadings), now, lastPublish, WiFi.RSSI());
+          Log.info("(ReadDistance_MB7389) - Dist.: %dmm, now= %d, lastPublish= %d, RSSI= %d", (int)(dist_mm / numReadings), now, lastPublish, WiFi.RSSI());
           if (abs(dist_mm - prev_dist_mm) > minDistChange){         // Publish event in case of a change in temperature
               lastPublish = now;                               // reset the max publish delay counter.
               pushToPublishQueue(evDistance, (int)(dist_mm / numReadings), now);
@@ -1060,9 +1079,8 @@ void ReadTherm_US100(){
             lastPublish = now;                               // reset the max publish delay counter.
             pushToPublishQueue(evOutOfRange, dist_mm, now);
             prev_dist_mm = dist_mm;
-            Serial.print("Hors portée: ");             // output distance to serial monitor
-            Serial.print(currentReading, DEC);
-            Serial.println("mm ");
+            Log.info("(ReadDistance_MB7389) - Hors portée: ");             // output distance to serial monitor
+            Log.info("(ReadDistance_MB7389) - currentReading: %d mm", currentReading);
           }
       }
    }
@@ -1106,7 +1124,7 @@ int AvgTempReading(int thisReading){
       if (ds18b20Count > 0){
           if (ds18b20Count > 1){
               // Un capteur à l'intérieur du boitier et un à l'extérieur
-              Serial.printlnf("lecture de 2 capteurs");
+              Log.info("(readDS18b20temp) - Lecture de 2 capteurs");
 
               ds18b20Sensors.requestTemperaturesByIndex(0); //requête de lecture
               for (i = 0; i < maxTry; i++){
@@ -1124,9 +1142,9 @@ int AvgTempReading(int thisReading){
 //                      pushToPublishQueue(evEnclosureTemp, (int) insideTempC, now);
                       prev_EnclosureTemp = insideTempC;
                   }
-                  Serial.printlnf("DS18b20 interne: %f, try= %d", insideTempC, i + 1);
+                  Log.info("(readDS18b20temp) - DS18b20 interne: %f, try= %d", insideTempC, i + 1);
               } else {
-                  Serial.printlnf("DS18B20 interne: Erreur de lecture");
+                  Log.info("(readDS18b20temp) - DS18B20 interne: Erreur de lecture");
                   insideTempC = 99;
               }
 
@@ -1143,10 +1161,10 @@ int AvgTempReading(int thisReading){
                       pushToPublishQueue(evAmbientTemp, (int) outsideTempC, now);
                       prev_TempExterne = outsideTempC;
                   }
-                  Serial.printlnf("DS18b20 externe: %f, try= %d", outsideTempC, i + 1);
+                  Log.info("(readDS18b20temp) - DS18b20 externe: %f, try= %d", outsideTempC, i + 1);
               } else {
                   // Si la measure est invalide
-                  Serial.printlnf("DS18B20 externe: Erreur de lecture");
+                  Log.info("(readDS18b20temp) - DS18B20 externe: Erreur de lecture");
                   outsideTempC = 99;
               }
 
@@ -1155,7 +1173,7 @@ int AvgTempReading(int thisReading){
 
            } else {
               // Un capteur à l'intérieur du boitier seulement
-              Serial.printlnf("lecture de 1 capteur");
+              Log.info("(readDS18b20temp) - lecture de 1 capteur");
               /*ds18b20Sensors.requestTemperaturesByAddress(enclosureThermometer); //requête de lecture*/
               ds18b20Sensors.requestTemperaturesByIndex(0); //requête de lecture
               for (i = 0; i < 5; i++){
@@ -1170,9 +1188,9 @@ int AvgTempReading(int thisReading){
 //                      pushToPublishQueue(evEnclosureTemp, (int) insideTempC, now);
                       prev_EnclosureTemp = insideTempC;
                   }
-                  Serial.printlnf("DS18b20 interne: %f", insideTempC);
+                  Log.info("(readDS18b20temp) - DS18b20 interne: %f", insideTempC);
               } else {
-                  Serial.printlnf("DS18B20 interne: Erreur de lecture");
+                  Log.info("(readDS18b20temp) - DS18B20 interne: Erreur de lecture");
                   insideTempC = 99;
               }
               return (insideTempC);
@@ -1210,7 +1228,7 @@ int simpleThermostat(double setPoint){
         }
 
         analogWrite(heater, HeatingPower);
-        /*Serial.printlnf("HeatingPower= %d, enclosureTemp= %d, now= %d", HeatingPower, prev_EnclosureTemp, millis());*/
+        /*Log.info("(simpleThermostat) - HeatingPower= %d, enclosureTemp= %d, now= %d", HeatingPower, prev_EnclosureTemp, millis());*/
         if (HeatingPower != prev_HeatingPower){
 //            pushToPublishQueue(evHeatingPowerLevel, HeatingPower, now);
             prev_HeatingPower = HeatingPower;
@@ -1227,7 +1245,7 @@ Section réservé pour le code de mesure du vide (vacuum)
   void VacReadVacuumSensor(){
     int val = analogRead(VacuumSensor);
     double VacAnalogvalue = VacRaw2kPa(val, VacCalibration);
-    Serial.printlnf("Vac raw= %d, VacAnalogvalue= %f, DeltaVac= %f", val, VacAnalogvalue, abs(VacAnalogvalue - prev_VacAnalogvalue) );
+    Log.info("(VacReadVacuumSensor) - Vac raw= %d, VacAnalogvalue= %f, DeltaVac= %f", val, VacAnalogvalue, abs(VacAnalogvalue - prev_VacAnalogvalue) );
     if (abs(VacAnalogvalue - prev_VacAnalogvalue) > minVacuumChange){  // Publish event in case of a change in vacuum
         lastPublish = now;                                             // reset the max publish delay counter.
         pushToPublishQueue(evVacuum, (int)(VacAnalogvalue * 100), now); // The measurements value is converted to integers for storage in the event buffer
@@ -1263,7 +1281,7 @@ Section réservé pour le code de mesure du vide (vacuum)
     double Vout = Vref * (raw + calibration) * (R1 + R2) / (4096UL * R2);      // Vout = Vref*Vraw*(r1_+r2_)/(4096*r2_)
     double Vac_kpa = (Vout-(Vs-0.92))/(Vs*K_fact);  // Vac_kpa = (Vout-(Vs-0,92))/(Vs*k)
     double Vac_inHg = Vac_kpa * 0.2953001;
-    /*Serial.printlnf("Vout= %f, Vac_kpa= %f, Vac_inHg= %f", Vout, Vac_kpa, Vac_inHg);*/
+    /*Log.info("(VacRaw2kPa) - Vout= %f, Vac_kpa= %f, Vac_inHg= %f", Vout, Vac_kpa, Vac_inHg);*/
     return Vac_inHg;                              // multiplie par 0.295301 pour avoir la valeur en Hg
   }
 #endif
@@ -1292,11 +1310,11 @@ void CheckValvePos(bool statusAll){
             if (i <= 1){
               int Valve1Pos = getValvePosition(ValvePos_state[0], ValvePos_state[1]);
               pushToPublishQueue(evValve1_Position, Valve1Pos, now);
-              Serial.println(DomainName + DeptName + "Valve 1 position: " + Valve1Pos + ", " + positionCode[Valve1Pos]);
+              Log.info("(CheckValvePos) - " + DomainName + DeptName + "Valve 1 position: " + Valve1Pos + ", " + positionCode[Valve1Pos]);
             } else {
               int Valve2Pos = getValvePosition(ValvePos_state[2], ValvePos_state[3]);
               pushToPublishQueue(evValve2_Position, Valve2Pos, now);
-              Serial.println(DomainName + DeptName + "Valve 2 position: " + Valve2Pos + ", " +  positionCode[Valve2Pos]);
+              Log.info("(CheckValvePos) - " + DomainName + DeptName + "Valve 2 position: " + Valve2Pos + ", " +  positionCode[Valve2Pos]);
             }
         }
     }
@@ -1353,12 +1371,12 @@ int remoteSet(String command){
     return -1; //Fail
   }
 
-  if (token == "MaxPublishDelay"){
+  if (token == "MaxPubDelay"){
     unsigned long newInterval;
     newInterval = data.toInt();
     if (newInterval > 0){
         maxPublishInterval = data.toInt();
-        Serial.printlnf("Now publishing at %d minutes interval", maxPublishInterval);
+        Log.info("(remoteSet) - Now publishing at %d minutes interval", maxPublishInterval);
         return 0;
     } else {
         return -1;
@@ -1379,7 +1397,7 @@ int remoteReset(String command) {
     newGenTimestamp = Time.now();
     noSerie = 0;
     savedEventCount = 0;
-    Serial.printlnf("Nouvelle génération de no de série maintenant: %lu", newGenTimestamp);
+    Log.info("(remoteReset) - Nouvelle génération de no de série maintenant: %lu", newGenTimestamp);
     pushToPublishQueue(evNewGenSN, -1, millis());
     return 0;
 // ou redémarre en safe mode (pour forcer une mise à jour)
@@ -1408,8 +1426,8 @@ bool writeEvent(struct Event thisEvent){
 
   } // Number of stored events in the buffer.
    //pour debug
-  // Serial.print("W------> " + DomainName + DeptName + eventName[thisEvent.namePtr]);
-  // Serial.printlnf(": writeEvent:: writePtr= %u, readPtr= %u, buffLen= %u, noSerie: %u, eData: %u, timer: %u",
+  // Log.info("(writeEvent) - W------> " + DomainName + DeptName + eventName[thisEvent.namePtr]);
+  // Log.info("(writeEvent) - : writeEvent:: writePtr= %u, readPtr= %u, buffLen= %u, noSerie: %u, eData: %u, timer: %u",
   //                                    writePtr, readPtr, buffLen, thisEvent.noSerie, thisEvent.eData, thisEvent.timer);
   return true;
 }
@@ -1418,7 +1436,7 @@ bool writeEvent(struct Event thisEvent){
 struct Event readEvent(){
   struct Event thisEvent = {};
   if (readPtr == writePtr){
-    // Serial.printlnf("<------- readEvent:: writePtr= %u, readPtr= %u, buffLen= %u, *** buffer vide ***",
+    // Log.info("(readEvent) - <------- readEvent:: writePtr= %u, readPtr= %u, buffLen= %u, *** buffer vide ***",
     //                                   writePtr, readPtr, buffLen);
     return thisEvent; // événement vide
   }
@@ -1430,8 +1448,8 @@ struct Event readEvent(){
       buffLen = writePtr - readPtr;
   }
   //pour debug
-  // Serial.print("<R------ " + DomainName + DeptName + eventName[thisEvent.namePtr]);
-  // Serial.printlnf(": readEvent:: writePtr= %u, readPtr= %u, buffLen= %u, noSerie: %u, eData: %u, timer: %u",
+  // Log.info("(readEvent) - <R------ " + DomainName + DeptName + eventName[thisEvent.namePtr]);
+  // Log.info("(readEvent) - : readEvent:: writePtr= %u, readPtr= %u, buffLen= %u, noSerie: %u, eData: %u, timer: %u",
   //                                   writePtr, readPtr, buffLen, thisEvent.noSerie, thisEvent.eData, thisEvent.timer);
   return thisEvent;
 }
@@ -1440,14 +1458,14 @@ struct Event readEvent(){
 struct Event peekEvent(uint16_t peekReadPtr){
   struct Event thisEvent = {};
   if (peekReadPtr == writePtr){
-    Serial.printlnf(" ------- peekEvent:: writePtr= %u, peekReadPtr= %u, buffLen= %u, *** buffer vide ***",
+    Log.info("(peekEvent) -  ------- peekEvent:: writePtr= %u, peekReadPtr= %u, buffLen= %u, *** buffer vide ***",
                                       writePtr, peekReadPtr, buffLen);
     return thisEvent; // événement vide
   }
   thisEvent = eventBuffer[peekReadPtr];
    //pour debug
-  // Serial.print(" ------- " + eventName[thisEvent.namePtr]);
-  // Serial.printlnf(": peekEvent:: writePtr= %u, readPtr= %u, buffLen= %u, noSerie: %u, eData: %u, timer: %u",
+  // Log.info((peekEvent) -  " ------- " + eventName[thisEvent.namePtr]);
+  // Log.info("(peekEvent) -  : peekEvent:: writePtr= %u, readPtr= %u, buffLen= %u, noSerie: %u, eData: %u, timer: %u",
   //                                   writePtr, peekReadPtr, buffLen, thisEvent.noSerie, thisEvent.eData, thisEvent.timer);
   return thisEvent;
 }
@@ -1465,7 +1483,7 @@ int replayEvent(String command){
   } else {
     return -1; //Fail
   }
-  Serial.printlnf("?????? Demande de replay Event SN: %u, génération: %u,  writePtr= %u, readPtr= %u, replayBuffLen= %u",
+  Log.info("(replayEvent) - ??? Demande de replay Event SN: %u, génération: %u,  writePtr= %u, readPtr= %u, replayBuffLen= %u",
                   targetSerNo, targetGen, writePtr, readPtr, replayBuffLen);
   if (replayBuffLen > 0){
       return -2; // Replay en cour - Attendre
@@ -1474,7 +1492,7 @@ int replayEvent(String command){
   if (targetSerNo >= 0 && targetGen > 0){ // Le numéro recherché doit être plus grand que 0
     // Validation
     if (targetGen != newGenTimestamp){
-      Serial.printlnf("??????? Error -99: targetGen= %lu, targetSerNo= %u", targetGen, targetSerNo);
+      Log.info("(replayEvent) - ??? Error -99: targetGen= %lu, targetSerNo= %u", targetGen, targetSerNo);
       return -99; // "invalid generation id"
     }
     if (targetSerNo >= noSerie){ // et plus petit que le numéro de série courant
@@ -1497,7 +1515,7 @@ int replayEvent(String command){
     } else {
         replayBuffLen = readPtr - replayPtr;
     }
-    Serial.printlnf("?????? Accepté pour replay Event no: %d, ReplayPtr= %u, writePtr= %u, readPtr= %u, replayBuffLen= %u, No de série courant= %u",
+    Log.info("(replayEvent) - ??? Accepté pour replay Event no: %d, ReplayPtr= %u, writePtr= %u, readPtr= %u, replayBuffLen= %u, No de série courant= %u",
                     targetSerNo, replayPtr, writePtr, readPtr, replayBuffLen, noSerie);
     return 0; //success
   } else {
@@ -1509,7 +1527,7 @@ int replayEvent(String command){
 struct Event replayReadEvent(){
   struct Event thisEvent = {};
   if (replayPtr == writePtr){
-    Serial.printlnf("\n<--&&--- replayReadEvent:: writePtr= %u, replayPtr= %u, replayBuffLen= %u, *** replay buffer vide ***",
+    Log.info("\n(replayReadEvent) - <--&&--- replayReadEvent:: writePtr= %u, replayPtr= %u, replayBuffLen= %u, *** replay buffer vide ***",
                                       writePtr, replayPtr, replayBuffLen);
     return thisEvent; // événement vide
   }
@@ -1522,8 +1540,8 @@ struct Event replayReadEvent(){
   }
 
   //pour debug
-  // Serial.print("<------- " + DomainName + DeptName + eventName[thisEvent.namePtr]);
-  // Serial.printlnf(": readEvent:: writePtr= %u, replayPtr= %u, replayBuffLen= %u, noSerie: %u, eData: %u, timer: %u",
+  // Log.info("(replayReadEvent) - <------- " + DomainName + DeptName + eventName[thisEvent.namePtr]);
+  // Log.info("(replayReadEvent) - : readEvent:: writePtr= %u, replayPtr= %u, replayBuffLen= %u, noSerie: %u, eData: %u, timer: %u",
   //                                   writePtr, replayPtr, replayBuffLen, thisEvent.noSerie, thisEvent.eData, thisEvent.timer);
   return thisEvent;
 }
@@ -1540,7 +1558,7 @@ typedef struct Event{
 String makeJSON(uint32_t numSerie, uint32_t timeStamp, uint32_t timer, int eData, String eName, bool replayFlag){
     sprintf(publishString,"{\"noSerie\": %u,\"generation\": %lu,\"timestamp\": %lu,\"timer\": %lu,\"eData\":%d,\"eName\": \"%s\",\"replay\":%d}",
                               numSerie, newGenTimestamp, timeStamp, timer, eData, eName.c_str(), replayFlag);
-    Serial.printlnf ("makeJSON: %s",publishString);
+    Log.info ("(makeJSON) - makeJSON: %s",publishString);
     return publishString;
 }
 
@@ -1552,7 +1570,7 @@ bool pushToPublishQueue(uint8_t eventNamePtr, int eData, uint32_t timer){
   //   remoteReset("serialNo"); // Bump up the generation number and reset the serial no.
   //   }
   thisEvent = {noSerie, Time.now(), timer, eventNamePtr, eData};
-  Serial.printlnf(">>>> pushToPublishQueue::: " + eventName[eventNamePtr]);
+  Log.info("(pushToPublishQueue) - >>>> pushToPublishQueue::: " + eventName[eventNamePtr]);
   writeEvent(thisEvent); // Pousse les données dans le buffer circulaire
   return true;
 }
@@ -1562,7 +1580,7 @@ bool publishQueuedEvents(){
     bool publishSuccess = false;
     struct Event thisEvent = {};
     bool replayFlag = false; // not a replay
-    Serial.println("<<<< publishQueuedEvents:::");
+    Log.info("(publishQueuedEvents) - < publishQueuedEvents:::");
     thisEvent = peekEvent(readPtr);
     if (sizeof(thisEvent) == 0){
         return publishSuccess; // Rien à publié
@@ -1588,7 +1606,7 @@ bool replayQueuedEvents(){
     bool publishSuccess = false;
     struct Event thisEvent = {};
     bool replayFlag = true; // This is a replay
-    Serial.println("&&&& replayQueuedEvents:::");
+    Log.info("(replayQueuedEvents) - &&&& replayQueuedEvents:::");
     thisEvent = peekEvent(replayPtr);
     if (sizeof(thisEvent) == 0){
         return publishSuccess; // Rien à publié
@@ -1620,7 +1638,7 @@ void checkPtrState(){
             readPtr = writePtr;
         }
     }
-    Serial.printlnf("Checked readPtr --> was:%u, now:%u", tmp, readPtr);
+    Log.info("(checkPtrState) - Checked readPtr --> was:%u, now:%u", tmp, readPtr);
 // check writePtr
     tmp = writePtr;
     if (writePtr > buffSize) {
@@ -1628,7 +1646,7 @@ void checkPtrState(){
             writePtr = readPtr;
         }
     }
-    Serial.printlnf("Checked writePtr --> was:%u, now:%u", tmp, writePtr);
+    Log.info("(checkPtrState) - Checked writePtr --> was:%u, now:%u", tmp, writePtr);
 // check buffLen
     tmp = buffLen;
     if (buffLen > buffSize){
@@ -1642,5 +1660,5 @@ void checkPtrState(){
     } else {
         buffLen = writePtr - readPtr;
     }
-    Serial.printlnf("Checked buffLen --> was:%u, now:%u", tmp, buffLen);
+    Log.info("(checkPtrState) - Checked buffLen --> was:%u, now:%u", tmp, buffLen);
 }
