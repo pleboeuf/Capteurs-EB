@@ -232,7 +232,7 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define maxRangeUS100 3000        // Distance maximale valide pour le captgeur
 #define maxRangeMB7389 1900       // Distance maximale valide pour le captgeur
 #define ONE_WIRE_BUS D4           //senseur sur D4
-#define DallasSensorResolution 9  // Résolution de lecture de température
+#define DallasSensorResolution 10  // Résolution de lecture de température
 #define MaxHeatingPowerPercent 90 // Puissance maximale appliqué sur la résistance de chauffage
 #define HeatingSetPoint 20        // Température cible à l'intérieur du boitier
 #define DefaultPubDelay 5     // Interval de publication en minutes par défaut
