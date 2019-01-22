@@ -17,7 +17,7 @@ STARTUP(WiFi.selectAntenna(ANT_EXTERNAL));
 STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 
 // Firmware version et date
-#define FirmwareVersion "1.3.6"   // Version du firmware du capteur.
+#define FirmwareVersion "1.3.7"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
@@ -30,28 +30,21 @@ String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
 Paramètres de compilation conditionnelle. Le programme qui suit est le même pour tous les devices.
 Les paramètres définissent la configuration des devices et le code est compilé conditionnellement
 dépendamment de cette configuration.
-
-Config pour:
-P1, P2, P3 -> DEVICE_CONF == 0
-V1, V2, V3 -> DEVICE_CONF == 1
-PT1, PT2 -> DEVICE_CONF == 2
-RS1, RS2, RS3, RS4, RF2 -> DEVICE_CONF == 3
-RF1, RC1, RC2 -> DEVICE_CONF == 4
-RS5, RS6 -> DEVICE_CONF == 5
-RHC -> DEVICE_CONF == 6
-VEcTk -> DEVICE_CONF == 7
 */
 
 /********* Choisir la configuration de device à compiler *********/
 #define DEVICE_CONF 3
+// Config pour:
+// P1, P2, P3 -> DEVICE_CONF == 0
+// V1, V2, V3 -> DEVICE_CONF == 1
+// PT1, PT2 -> DEVICE_CONF == 2
+// RS1, RS2, RS3, RS4, RF2 -> DEVICE_CONF == 3
+// RF1, RC1, RC2 -> DEVICE_CONF == 4
+// RS5, RS6 -> DEVICE_CONF == 5
+// RHC -> DEVICE_CONF == 6
+// VEcTk -> DEVICE_CONF == 7
 /*****************************************************************/
 
-/*Config for P1, P2, P3 -> DEVICE_CONF == 0
-DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
-P1        None            true            false            false      true            false     false          false
-P2        None            true            false            false      true            false     false          false
-P3        None            true            false            false      true            false     false          false
-*/
 #if (DEVICE_CONF == 0)
   String config = "0 -> P1, P2, P3";  //String info de configuration
   #define DISTANCESENSOR NONE         //Pour compilation conditionnelle du serial handler: US100. MB7389, None
@@ -63,14 +56,13 @@ P3        None            true            false            false      true      
   #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
   #define baseSampling  1             //basic sampling interval for main loop
+  /*Config for P1, P2, P3 -> DEVICE_CONF == 0
+  DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
+  P1        None            true            false            false      true            false     false          false
+  P2        None            true            false            false      true            false     false          false
+  P3        None            true            false            false      true            false     false          false
+  */
 
-
-/*Config for V1, V2, V3 -> DEVICE_CONF == 1
-DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
-V1        None            true            true(1)          true       true            false     true           false
-V2        None            true            true(1)          true       true            false     true           false
-V3        None            true            true(1)          true       true            false     true           false
-*/
 #elif (DEVICE_CONF == 1)
   String config = "1 -> V1, V2, V3";  //String info de configuration
   #define DISTANCESENSOR NONE         //Pour compilation conditionnelle du serial handler: US100. MB7389, None
@@ -82,13 +74,13 @@ V3        None            true            true(1)          true       true      
   #define HASRELAYOUTPUT true         //Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
   #define baseSampling  1             //basic sampling interval for main loop
+  /*Config for V1, V2, V3 -> DEVICE_CONF == 1
+  DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
+  V1        None            true            true(1)          true       true            false     true           false
+  V2        None            true            true(1)          true       true            false     true           false
+  V3        None            true            true(1)          true       true            false     true           false
+  */
 
-
-/*Config for PT1, PT2 -> DEVICE_CONF == 2
-DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
-PT1       None            true            true(1)          false      false           false     true           false
-PT2       None            true            true(1)          false      false           false     true           false
-*/
 #elif (DEVICE_CONF == 2)
   String config = "2 -> PT1, PT2";    //String info de configuration
   #define DISTANCESENSOR NONE         //Pour compilation conditionnelle du serial handler: US100. MB7389, None
@@ -100,16 +92,12 @@ PT2       None            true            true(1)          false      false     
   #define HASRELAYOUTPUT true         //Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
   #define baseSampling  1             //basic sampling interval for main loop
+  /*Config for PT1, PT2 -> DEVICE_CONF == 2
+  DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
+  PT1       None            true            true(1)          false      false           false     true           false
+  PT2       None            true            true(1)          false      false           false     true           false
+  */
 
-
-/*Config for RS1, RS2, RS3, RS4, RF2 -> DEVICE_CONF == 3
-DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
-RS1       US100           false           true(2)          true       false           true      false          true
-RS2       US100           false           true(1)          true       false           true      false          true
-RS3       US100           false           true(1)          true       false           true      false          true
-RS4       US100           false           true(1)          true       false           true      false          true
-RF2       US100           false           true(1)          true       false           true      false          true
-*/
 #elif (DEVICE_CONF == 3)
   String config = "3 -> RS1, RS2, RS3, RS4, RF2"; //String info de configuration
   #define DISTANCESENSOR US100        //Pour compilation conditionnelle du serial handler: US100. MB7389, None
@@ -121,14 +109,15 @@ RF2       US100           false           true(1)          true       false     
   #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR true     //Un thermistor est présent pour mesurer la température du boitier US100 robuste
   #define baseSampling  2             //basic sampling interval for main loop. Very slow to avoid echo
+  /*Config for RS1, RS2, RS3, RS4, RF2 -> DEVICE_CONF == 3
+  DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
+  RS1       US100           false           true(2)          true       false           true      false          true
+  RS2       US100           false           true(1)          true       false           true      false          true
+  RS3       US100           false           true(1)          true       false           true      false          true
+  RS4       US100           false           true(1)          true       false           true      false          true
+  RF2       US100           false           true(1)          true       false           true      false          true
+  */
 
-
-/*Config for RF1, RC1, RC2 -> DEVICE_CONF == 4
-DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
-RF1       US100           false           true(1)          true       false           false     false          false
-RC1       US100           false           true(1)          true       false           false     false          false
-RC2       US100           false           true(1)          true       false           false     false          false
-*/
 #elif (DEVICE_CONF == 4)
   String config = "4 -> RF1, RC1, RC2"; //String info de configuration
   #define DISTANCESENSOR US100        //Pour compilation conditionnelle du serial handler: US100. MB7389, None
@@ -140,13 +129,13 @@ RC2       US100           false           true(1)          true       false     
   #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
   #define baseSampling  1             //basic sampling interval for main loop
+  /*Config for RF1, RC1, RC2 -> DEVICE_CONF == 4
+  DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
+  RF1       US100           false           true(1)          true       false           false     false          false
+  RC1       US100           false           true(1)          true       false           false     false          false
+  RC2       US100           false           true(1)          true       false           false     false          false
+  */
 
-
-/*Config for RS5, RS6 -> DEVICE_CONF == 5
-DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
-RS5       US100           false           false            false      false           true      false          false
-RS6       US100           false           false            false      false           true      false          false
-*/
 #elif (DEVICE_CONF == 5)
   String config = "5 -> RS5, RS6";    //String info de configuration
   #define DISTANCESENSOR US100        //Pour compilation conditionnelle du serial handler: US100. MB7389, None
@@ -158,12 +147,12 @@ RS6       US100           false           false            false      false     
   #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
   #define baseSampling  1             //basic sampling interval for main loop
+  /*Config for RS5, RS6 -> DEVICE_CONF == 5
+  DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
+  RS5       US100           false           false            false      false           true      false          false
+  RS6       US100           false           false            false      false           true      false          false
+  */
 
-
-/*Config for RHC -> DEVICE_CONF == 6
-DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
-RHC       MB7389          false           true(1)          true       false           false     false          false
-*/
 #elif (DEVICE_CONF == 6)
   String config = "6 -> RHC";         //String info de configuration
   #define DISTANCESENSOR MB7389       //Pour compilation conditionnelle du serial handler: US100. MB7389, None
@@ -175,12 +164,11 @@ RHC       MB7389          false           true(1)          true       false     
   #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
   #define baseSampling  2             //basic sampling interval for main loop. Very slow to avoid echo
+  /*Config for RHC -> DEVICE_CONF == 6
+  DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
+  RHC       MB7389          false           true(1)          true       false           false     false          false
+  */
 
-
-/*Config for VEcTk -> DEVICE_CONF == 7
-DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
-VEcTk     NONE            false           true(1)          true       false           true      false          false
-*/
 #elif (DEVICE_CONF == 7)
   String config = "7 -> VEcTk";       //String info de configuration
   #define DISTANCESENSOR NONE         //Pour compilation conditionnelle du serial handler: US100. MB7389, None
@@ -192,12 +180,11 @@ VEcTk     NONE            false           true(1)          true       false     
   #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
   #define baseSampling  1             //basic sampling interval for main loop
+  /*Config for VEcTk -> DEVICE_CONF == 7
+  DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
+  VEcTk     NONE            false           true(1)          true       false           true      false          false
+  */
 
-
-/*Config for DummyDevice -> DEVICE_CONF == 8
-DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
-Dummy     NONE            false           false            false      false           true      false          false
-*/
 #elif (DEVICE_CONF == 8)
   String config = "8 -> Dummy";       //String info de configuration
   #define DISTANCESENSOR NONE         //Pour compilation conditionnelle du serial handler: US100. MB7389, None
@@ -209,6 +196,10 @@ Dummy     NONE            false           false            false      false     
   #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
   #define baseSampling  1             //basic sampling interval for main loop
+  /*Config for DummyDevice -> DEVICE_CONF == 8
+  DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
+  Dummy     NONE            false           false            false      false           true      false          false
+  */
 
 #else
   #error Invalid device configuration!
