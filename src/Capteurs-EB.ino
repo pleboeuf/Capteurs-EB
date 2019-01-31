@@ -17,7 +17,7 @@ STARTUP(WiFi.selectAntenna(ANT_EXTERNAL));
 STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 
 // Firmware version et date
-#define FirmwareVersion "1.3.7"   // Version du firmware du capteur.
+#define FirmwareVersion "1.3.8"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
@@ -595,6 +595,14 @@ void setup() {
     }
     if(Particle.connected()){
         Log.info("Connecté au nuage. :)");
+        Particle.syncTime();
+        if (not(Time.isValid()) || Time.year() < 2019) {
+            Log.info("(setup) Syncing time ");
+            Particle.syncTime();
+            waitUntil(Particle.syncTimeDone);
+            Log.info("(setup) syncTimeDone " + Time.timeStr());
+            newGenTimestamp = Time.now();
+        }
     } else {
         Log.info("Pas de connexion au nuage. :( ");
     }
@@ -1385,6 +1393,10 @@ int remoteReset(String command) {
     System.reset();
 // ou juste les numéros de série.
   } else if (command == "serialNo") {
+    Particle.syncTime();
+    for (int i; i < 30; i++){
+        delay(100UL);
+    }
     newGenTimestamp = Time.now();
     noSerie = 0;
     savedEventCount = 0;
