@@ -12,12 +12,13 @@
 #include "spark-dallas-temperature.h"
 #include "photon-wdgs.h"
 
-SYSTEM_THREAD(ENABLED);
-STARTUP(WiFi.selectAntenna(ANT_EXTERNAL));
+STARTUP(WiFi.selectAntenna(ANT_AUTO));
 STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
+SYSTEM_MODE(SEMI_AUTOMATIC);
+// SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.3.8"   // Version du firmware du capteur.
+#define FirmwareVersion "1.3.12"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
@@ -234,7 +235,7 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define ONE_WIRE_BUS D4           //senseur sur D4
 #define DallasSensorResolution 10  // Résolution de lecture de température
 #define MaxHeatingPowerPercent 90 // Puissance maximale appliqué sur la résistance de chauffage
-#define HeatingSetPoint 20        // Température cible à l'intérieur du boitier
+#define HeatingSetPoint 25        // Température cible à l'intérieur du boitier
 #define DefaultPubDelay 5     // Interval de publication en minutes par défaut
 #define TimeoutDelay 6 * slowSampling // Device watch dog timer time limit
 #define pumpRunTimeLimit 3 * minute // Maximum pump run time before a warning is issued
@@ -435,34 +436,6 @@ void nameHandler(const char *topic, const char *data) {
   /*Log.info("received " + String(topic) + ": " + String(data));*/
 }
 
-/*
-// Create a class and handler to mimic the state of the RGB LED on the Photon
-*/
-class ExternalRGB {
-  public:
-    ExternalRGB(pin_t r, pin_t g, pin_t b) : pin_r(r), pin_g(g), pin_b(b) {
-      pinMode(pin_r, OUTPUT);
-      pinMode(pin_g, OUTPUT);
-      pinMode(pin_b, OUTPUT);
-      RGB.onChange(&ExternalRGB::LEDhandler, this);
-    }
-
-    void LEDhandler(uint8_t r, uint8_t g, uint8_t b) {
-      analogWrite(pin_r, 255 - r); // 255 - r pour common cathode
-      analogWrite(pin_g, 255 - g); // 255 - g pour common cathode
-      analogWrite(pin_b, 255 - b); // 255 - b pour common cathode
-    }
-
-    private:
-      pin_t pin_r;
-      pin_t pin_g;
-      pin_t pin_b;
-};
-
-  // Connect an external RGB LED to D0, D1 and D2 (R, G, and B)
-  ExternalRGB myRGB(RGBled_Red, RGBled_Green, RGBLed_Blue);
-
-
 #if PUMPMOTORDETECT
 /*
   Attach interrupt handler to pin A1 to monitor pump Start/Stop
@@ -508,6 +481,9 @@ SerialLogHandler logHandler(115200, LOG_LEVEL_TRACE, {   // Logging level for no
 
 void setup() {
   // Initialisation des pin I/O
+      RGB.mirrorTo(RGBled_Red, RGBled_Green, RGBLed_Blue, true);
+      delay(3000UL); // Pour partir le moniteur série pour début
+
       pinMode(led, OUTPUT);
       digitalWrite(led, HIGH); // Mettre le led de status à OFF
       pinMode(ssrRelay, OUTPUT);
@@ -581,14 +557,16 @@ void setup() {
       Log.info(" $$$$$$$ Set distSensorName to MB7389");
     #endif
 
-    delay(300UL); // Pour partir le moniteur série pour débug
+    Log.info("Configuration du wifi... ");
     WiFi.setCredentials("BoilerHouse", "Station Shefford");
     WiFi.setCredentials("PumpHouse", "Station Laporte");
-
-    delay(3000); // Pour partir le moniteur série
+    WiFi.setCredentials("PL-Net", "calvin et hobbes");
+    Log.info("Connexion au wifi... ");
+    WiFi.connect();
 
 // Attendre la connection au nuage
     Log.info("En attente... ");
+    Particle.connect();
     if (waitFor(Particle.connected, 10000)) {
       delay(1000);
       Serial.print(".");
@@ -867,6 +845,7 @@ void readSelectedSensors(int sensorNo) {
 
       #if DISTANCESENSOR == MB7389
         ReadDistance_MB7389();
+        Particle.process();
       #else
         delay(20UL);  // Just to have a visible flash on the LED
       #endif
@@ -876,6 +855,7 @@ void readSelectedSensors(int sensorNo) {
     // Measure temperature with DS10b20 sensors
       #if HASDS18B20SENSOR
         readDS18b20temp();
+        Particle.process();
       #else
         delay(20UL);  // Just to have a visible flash on the LED
       #endif
@@ -894,6 +874,7 @@ void readSelectedSensors(int sensorNo) {
     case 3:
       #if HASVACUUMSENSOR
         VacReadVacuumSensor(); // Read vacuum
+        Particle.process();
       #endif
       delay(20UL);  // Just to have a visible flash on the LED
       break;
@@ -902,6 +883,7 @@ void readSelectedSensors(int sensorNo) {
     // And maybe the US100 enclosure thermistor
       #if HASUS100THERMISTOR
         ReadTherm_US100();
+        Particle.process();
       #else
         delay(20UL);  // Just to have a visible flash on the LED
       #endif
@@ -1397,12 +1379,18 @@ int remoteReset(String command) {
     for (int i; i < 30; i++){
         delay(100UL);
     }
-    newGenTimestamp = Time.now();
-    noSerie = 0;
-    savedEventCount = 0;
-    Log.info("(remoteReset) - Nouvelle génération de no de série maintenant: %lu", newGenTimestamp);
-    pushToPublishQueue(evNewGenSN, -1, millis());
-    return 0;
+    if (Time.isValid()){
+        newGenTimestamp = Time.now();
+        noSerie = 0;
+        savedEventCount = 0;
+        Log.info("(remoteReset) - Nouvelle génération de no de série maintenant: %lu", newGenTimestamp);
+        pushToPublishQueue(evNewGenSN, -1, millis());
+        return 0;
+    } else {
+        Log.info("(remoteReset) - Time is still invalid!: %lu", Time.now());
+        return -1;
+    }
+
 // ou redémarre en safe mode (pour forcer une mise à jour)
   } else if (command == "safeMode") {
     System.enterSafeMode();
