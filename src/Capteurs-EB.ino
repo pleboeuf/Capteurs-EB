@@ -1209,7 +1209,7 @@ int simpleThermostat(double setPoint){
         }
 
         analogWrite(heater, HeatingPower);
-        /*Log.info("(simpleThermostat) - HeatingPower= %d, enclosureTemp= %d, now= %d", HeatingPower, prev_EnclosureTemp, millis());*/
+        Log.info("(simpleThermostat) - HeatingPower= %d, enclosureTemp= %d, now= %d", HeatingPower, prev_EnclosureTemp, millis());
         if (HeatingPower != prev_HeatingPower){
 //            pushToPublishQueue(evHeatingPowerLevel, HeatingPower, now);
             prev_HeatingPower = HeatingPower;
