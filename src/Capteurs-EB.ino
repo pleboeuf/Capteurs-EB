@@ -14,11 +14,10 @@
 
 STARTUP(WiFi.selectAntenna(ANT_AUTO));
 STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
-SYSTEM_MODE(SEMI_AUTOMATIC);
-// SYSTEM_THREAD(ENABLED);
+SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.3.12"   // Version du firmware du capteur.
+#define FirmwareVersion "1.3.15"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
@@ -234,7 +233,7 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define maxRangeMB7389 1900       // Distance maximale valide pour le captgeur
 #define ONE_WIRE_BUS D4           //senseur sur D4
 #define DallasSensorResolution 10  // Résolution de lecture de température
-#define MaxHeatingPowerPercent 90 // Puissance maximale appliqué sur la résistance de chauffage
+#define MaxHeatingPowerPercent 80 // Puissance maximale appliqué sur la résistance de chauffage
 #define HeatingSetPoint 25        // Température cible à l'intérieur du boitier
 #define DefaultPubDelay 5     // Interval de publication en minutes par défaut
 #define TimeoutDelay 6 * slowSampling // Device watch dog timer time limit
@@ -385,8 +384,8 @@ int allTempReadings[numReadings];
   int ds18b20Count = 0;
   bool validTempExterne = false;
   bool validEnclosureTemp = false;
-  int prev_EnclosureTemp = 99;
-  int prev_TempExterne = 99;
+  double prev_EnclosureTemp = 99;
+  double prev_TempExterne = 99;
 #endif
 
 int HeatingPower = 0;
@@ -483,14 +482,15 @@ void setup() {
   // Initialisation des pin I/O
       RGB.mirrorTo(RGBled_Red, RGBled_Green, RGBLed_Blue, true);
       delay(3000UL); // Pour partir le moniteur série pour début
+      WiFi.disconnect();
 
       pinMode(led, OUTPUT);
       digitalWrite(led, HIGH); // Mettre le led de status à OFF
       pinMode(ssrRelay, OUTPUT);
       #if HASHEATING
           pinMode(heater, OUTPUT);
-          HeatingPower =  256 * MaxHeatingPowerPercent / 100; // Valeur de PWM de chauffage
-          analogWrite(heater, HeatingPower); //Désactiver le chauffage
+          HeatingPower =  0; // Valeur de PWM de chauffage
+          analogWrite(heater, HeatingPower, 500); //Désactiver le chauffage
       #endif
       digitalWrite(ssrRelay, LOW);
 
@@ -514,7 +514,7 @@ void setup() {
         Serial1.begin(9600);  // Le capteur US-100 fonctionne à 9600 baud
     #endif
 // Enregistrement des fonctions et variables disponible par le nuage
-    Log.info("Enregistrement des variables et fonctions\n");
+    Log.info("(setup) Enregistrement des variables et fonctions\n");
     Particle.variable("Version", FirmwareVersion);
     Particle.variable("Date", FirmwareDate);
     Particle.variable("config", config);
@@ -904,12 +904,21 @@ void readSelectedSensors(int sensorNo) {
   void initDS18B20Sensors(){
     // Configuration des capteurs de température DS18B20
     float insideTempC, outsideTempC;
+    int D3res = analogWriteResolution(heater);
+    int D3maxFreq = analogWriteMaxFrequency(heater);
+    Log.info("(initDS18B20Sensors) - Resolution and Frequency for pin 'heater': %d bits, maxFreq: %d Hz", D3res, D3maxFreq);
 
-    ds18b20Sensors.begin();
-    delay(300);
-    ds18b20Count = ds18b20Sensors.getDeviceCount();
+    int j = 0;
+    do
+    {
+        ds18b20Sensors.begin();
+        delay(500);
+        ds18b20Count = ds18b20Sensors.getDeviceCount();
+        j++;
+    } while (ds18b20Count == 0 && j < 5);
+
     ds18b20Sensors.setWaitForConversion(true);
-    Log.info("(initDS18B20Sensors) - DS18B20 trouvé: %d", ds18b20Count);
+    Log.info("(initDS18B20Sensors) - DS18B20 found: %d after %d try.", ds18b20Count, j);
 
     if (ds18b20Count == 1){
         Log.info("(initDS18B20Sensors) - Configuration de 1 ds18b20");
@@ -967,7 +976,7 @@ void readSelectedSensors(int sensorNo) {
           rawDistmm = currentReading;
           if((currentReading > 1) && (currentReading < maxRangeUS100)){       // normal distance should between 1mm and 2500 mm (1mm, 2,5m)
               dist_mm = AvgDistReading(currentReading); // Average the distance readings
-              Log.info("(ReadDistance_US100) - Dist.: %dmm, now= %d, lastPublish= %d, RSSI= %d", (int)(dist_mm / numReadings), now, lastPublish, WiFi.RSSI());
+              Log.info("(ReadDistance_US100) - Dist.: %dmm, now= %d, lastPublish= %d, RSSI= %d", (int)(dist_mm / numReadings), now, lastPublish, (int8_t) WiFi.RSSI());
               if (abs(dist_mm - prev_dist_mm) > minDistChange){         // Publish event in case of a change in temperature
                   lastPublish = now;                               // reset the max publish delay counter.
                   pushToPublishQueue(evDistance, (int)(dist_mm / numReadings), now);
@@ -1046,7 +1055,7 @@ void ReadTherm_US100(){
       rawDistmm = currentReading;
       if((currentReading > 1) && (currentReading < maxRangeMB7389)){       // normal distance should between 1mm and 2500 mm (1mm, 2,5m)
           dist_mm = AvgDistReading(currentReading); // Average the distance readings
-          Log.info("(ReadDistance_MB7389) - Dist.: %dmm, now= %d, lastPublish= %d, RSSI= %d", (int)(dist_mm / numReadings), now, lastPublish, WiFi.RSSI());
+          Log.info("(ReadDistance_MB7389) - Dist.: %dmm, now= %d, lastPublish= %d, RSSI= %d", (int)(dist_mm / numReadings), now, lastPublish, (int8_t) WiFi.RSSI());
           if (abs(dist_mm - prev_dist_mm) > minDistChange){         // Publish event in case of a change in temperature
               lastPublish = now;                               // reset the max publish delay counter.
               pushToPublishQueue(evDistance, (int)(dist_mm / numReadings), now);
@@ -1113,16 +1122,11 @@ int AvgTempReading(int thisReading){
                   if (isValidDs18b20Reading(insideTempC)) break;
               }
               if (insideTempC > 30.0){
-                analogWrite(heater, HeatingPower); //for enclosure safety
+                analogWrite(heater, HeatingPower, 500); //for enclosure safety
               }
               validEnclosureTemp = isValidDs18b20Reading(insideTempC);
               if (validEnclosureTemp){
-                  // Si la mesure est valide
-                  if (abs(insideTempC - prev_EnclosureTemp) >= 1){
-                      // Publier s'il y a eu du changement
-//                      pushToPublishQueue(evEnclosureTemp, (int) insideTempC, now);
-                      prev_EnclosureTemp = insideTempC;
-                  }
+                  prev_EnclosureTemp = insideTempC;
                   Log.info("(readDS18b20temp) - DS18b20 interne: %f, try= %d", insideTempC, i + 1);
               } else {
                   Log.info("(readDS18b20temp) - DS18B20 interne: Erreur de lecture");
@@ -1165,10 +1169,7 @@ int AvgTempReading(int thisReading){
               }
               validEnclosureTemp = isValidDs18b20Reading(insideTempC);
               if (validEnclosureTemp){
-                  if (abs(insideTempC - prev_EnclosureTemp) >= 1){
-//                      pushToPublishQueue(evEnclosureTemp, (int) insideTempC, now);
-                      prev_EnclosureTemp = insideTempC;
-                  }
+                  prev_EnclosureTemp = insideTempC;
                   Log.info("(readDS18b20temp) - DS18b20 interne: %f", insideTempC);
               } else {
                   Log.info("(readDS18b20temp) - DS18B20 interne: Erreur de lecture");
@@ -1193,27 +1194,25 @@ int AvgTempReading(int thisReading){
 // Imprémentation d'un thermostat simple ON/OFF
 // La routine ne fonctionne que si un capteur de température interne est trouvé
 int simpleThermostat(double setPoint){
-    Particle.process();
     // executer la fonction de thermostat si on a un capteur de température
     if (ds18b20Count > 0){
         // executer la fonction de thermostat si la température interne est valide
         if (prev_EnclosureTemp != 99){
             if (prev_EnclosureTemp < (setPoint - 0.5)){
-                HeatingPower =  256 *  MaxHeatingPowerPercent /100;
+                HeatingPower =  32767 *  MaxHeatingPowerPercent / 100UL;
             } else if (prev_EnclosureTemp > (setPoint + 0.5)){
                 HeatingPower =  0;
             }
         } else if(prev_EnclosureTemp == 99){
         // Si non mettre le chauffage à 1/4 de puissance pour éviter le gel.
-            HeatingPower =  0.5 * (256 *  MaxHeatingPowerPercent /100); // Chauffage fixe au 1/4 de la puissance
+            HeatingPower =  0.25 * (32767 *  MaxHeatingPowerPercent / 100UL); // Chauffage fixe au 1/4 de la puissance
         }
-
-        analogWrite(heater, HeatingPower);
-        Log.info("(simpleThermostat) - HeatingPower= %d, enclosureTemp= %d, now= %d", HeatingPower, prev_EnclosureTemp, millis());
-        if (HeatingPower != prev_HeatingPower){
-//            pushToPublishQueue(evHeatingPowerLevel, HeatingPower, now);
-            prev_HeatingPower = HeatingPower;
-        }
+        analogWrite(heater, HeatingPower, 500);
+        Log.info("(simpleThermostat) - HeatingPower= %d, enclosureTemp= %0.1f, now= %d", HeatingPower, prev_EnclosureTemp, millis());
+        // if (HeatingPower != prev_HeatingPower){
+        //    pushToPublishQueue(evHeatingPowerLevel, HeatingPower, now);
+        //    prev_HeatingPower = HeatingPower;
+        // }
     }
     return HeatingPower;
 }
