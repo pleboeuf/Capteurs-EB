@@ -17,7 +17,7 @@ STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.3.15"   // Version du firmware du capteur.
+#define FirmwareVersion "1.3.16"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
@@ -243,6 +243,7 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define pumpOFFstate 1            // Pump signal is active low.
 #define StartDSTtime 1552197600   //dim 10 mar 2019, 02 h 00 = 1552197600 local time
 #define EndDSTtime 1572850800     //dim 4 nov 2019, 02 h 00 = 1572850800 local time
+#define MB7389_pin2 RX            // MB7389 pulse pin (pin 2) connected to serial1 Rx
 
 // Definition for vacuum transducer
 #define R1 18000                    // pressure xducer scaling resistor 1
@@ -424,6 +425,7 @@ bool connWasLost = false;
   unsigned int MB7389latestReading = 0;
   const int R = 82;
   const int CR = 13;
+  long MB7389_pulse;
 #endif
 
 /*
@@ -485,6 +487,7 @@ void setup() {
       WiFi.disconnect();
 
       pinMode(led, OUTPUT);
+      pinMode(MB7389_pin2, INPUT);
       digitalWrite(led, HIGH); // Mettre le led de status à OFF
       pinMode(ssrRelay, OUTPUT);
       #if HASHEATING
@@ -510,9 +513,9 @@ void setup() {
 
 // connect RX to Echo/Rx (US-100), TX to Trig/Tx (US-100)
     Serial.begin(115200); // Pour débug
-    #if DISTANCESENSOR == MB7389
-        Serial1.begin(9600);  // Le capteur US-100 fonctionne à 9600 baud
-    #endif
+    // #if DISTANCESENSOR == MB7389
+    //     Serial1.begin(9600);  // Le capteur US-100 fonctionne à 9600 baud
+    // #endif
 // Enregistrement des fonctions et variables disponible par le nuage
     Log.info("(setup) Enregistrement des variables et fonctions\n");
     Particle.variable("Version", FirmwareVersion);
@@ -550,7 +553,7 @@ void setup() {
     Particle.function("replay", replayEvent);
 
     #if DISTANCESENSOR == MB7389
-      Serial1.halfduplex(true); // Ce capteur envoie seulement des données sésie dans une seule direction
+    //   Serial1.halfduplex(true); // Ce capteur envoie seulement des données sésie dans une seule direction
                                 // On peut utiliser la pin RX pour contrôler son fonctionnement
                                 // RX = LOW pour arrêter le capteur, RX = HIGH pour le démarrer
       distSensorName = "MB7389";
@@ -624,31 +627,31 @@ void setup() {
     Pour utilisation par la routine de measure
 */
 
-#if DISTANCESENSOR == MB7389
-  void serialEvent1(){
-      char c = Serial1.read();
-
-  // Début de séquence
-      if (c == R){
-          MB7389Valid = true;
-          Dist_MB7389Str = "";
-          return;
-      }
-
-  // Fin de séquence
-      if (c == CR){
-          MB7389Valid = false;
-          MB7389latestReading = Dist_MB7389Str.toInt();
-          //Log.info("Dist_MB7389Str= " + Dist_MB7389Str);
-          return;
-       }
-
-  // Accumule des données
-      if (MB7389Valid == true){
-          Dist_MB7389Str += c;
-      }
-  }
-#endif
+// #if DISTANCESENSOR == MB7389
+//   void serialEvent1(){
+//       char c = Serial1.read();
+//
+//   // Début de séquence
+//       if (c == R){
+//           MB7389Valid = true;
+//           Dist_MB7389Str = "";
+//           return;
+//       }
+//
+//   // Fin de séquence
+//       if (c == CR){
+//           MB7389Valid = false;
+//           MB7389latestReading = Dist_MB7389Str.toInt();
+//           //Log.info("Dist_MB7389Str= " + Dist_MB7389Str);
+//           return;
+//        }
+//
+//   // Accumule des données
+//       if (MB7389Valid == true){
+//           Dist_MB7389Str += c;
+//       }
+//   }
+// #endif
 
 /*******************************************************************************
     Boucle principale
@@ -1049,9 +1052,10 @@ void ReadTherm_US100(){
 #if DISTANCESENSOR == MB7389
 // Cette routine mesure la distance entre la surface de l'eau et le capteur ultason
   void ReadDistance_MB7389(){
-      unsigned int currentReading = MB7389latestReading;
+      MB7389_pulse = pulseIn(MB7389_pin2, HIGH);
+      long currentReading = MB7389_pulse;
       Log.info("(ReadDistance_MB7389) - Distance meas routine: ReadDistance_MB7389");
-      Log.info("(ReadDistance_MB7389) - MB7389latestReading: %d", MB7389latestReading);
+      Log.info("(ReadDistance_MB7389) - MB7389latestReading: %d", currentReading);
       rawDistmm = currentReading;
       if((currentReading > 1) && (currentReading < maxRangeMB7389)){       // normal distance should between 1mm and 2500 mm (1mm, 2,5m)
           dist_mm = AvgDistReading(currentReading); // Average the distance readings
