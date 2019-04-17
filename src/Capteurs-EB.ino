@@ -17,7 +17,7 @@ STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.3.16"   // Version du firmware du capteur.
+#define FirmwareVersion "1.3.18"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
@@ -432,6 +432,10 @@ bool connWasLost = false;
    handler to receive the module name
 */
 String myDeviceName = "";
+IPAddress deviceIP;
+char myDeviceIP[20] = "";
+String myIpString = "";
+
 void nameHandler(const char *topic, const char *data) {
   myDeviceName =  String(data);
   /*Log.info("received " + String(topic) + ": " + String(data));*/
@@ -546,6 +550,7 @@ void setup() {
 
     Particle.variable("relayState", RelayState);
     Particle.variable("rssi", rssi);
+    Particle.variable("myIPaddress", myDeviceIP);
 // Fonctions disponible dans le nuage
     Particle.function("relay", toggleRelay);
     Particle.function("set", remoteSet);
@@ -563,7 +568,6 @@ void setup() {
     Log.info("Configuration du wifi... ");
     WiFi.setCredentials("BoilerHouse", "Station Shefford");
     WiFi.setCredentials("PumpHouse", "Station Laporte");
-    WiFi.setCredentials("PL-Net", "calvin et hobbes");
     Log.info("Connexion au wifi... ");
     WiFi.connect();
 
@@ -584,6 +588,8 @@ void setup() {
             Log.info("(setup) syncTimeDone " + Time.timeStr());
             newGenTimestamp = Time.now();
         }
+        deviceIP = WiFi.localIP();
+         sprintf(myDeviceIP, "%d.%d.%d.%d", deviceIP[0], deviceIP[1], deviceIP[2], deviceIP[3]);
     } else {
         Log.info("Pas de connexion au nuage. :( ");
     }
@@ -620,38 +626,6 @@ void setup() {
     lastPublish = millis(); //Initialise le temps initial de publication
     changeTime = lastPublish; //Initialise le temps initial de changement de la pompe
 }
-
-/*
-    Le capteur de distance MB7389 fonctionne en continu.
-    Cette routine reçoit les données séries et met le résultats dans une variable
-    Pour utilisation par la routine de measure
-*/
-
-// #if DISTANCESENSOR == MB7389
-//   void serialEvent1(){
-//       char c = Serial1.read();
-//
-//   // Début de séquence
-//       if (c == R){
-//           MB7389Valid = true;
-//           Dist_MB7389Str = "";
-//           return;
-//       }
-//
-//   // Fin de séquence
-//       if (c == CR){
-//           MB7389Valid = false;
-//           MB7389latestReading = Dist_MB7389Str.toInt();
-//           //Log.info("Dist_MB7389Str= " + Dist_MB7389Str);
-//           return;
-//        }
-//
-//   // Accumule des données
-//       if (MB7389Valid == true){
-//           Dist_MB7389Str += c;
-//       }
-//   }
-// #endif
 
 /*******************************************************************************
     Boucle principale
