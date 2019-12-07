@@ -9,15 +9,16 @@
  */
 
 // This #include statement was automatically added by the Particle IDE.
+#include "Particle.h"
 #include "spark-dallas-temperature.h"
-#include "photon-wdgs.h"
+// #include "photon-wdgs.h"
 
 STARTUP(WiFi.selectAntenna(ANT_AUTO));
 STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.3.18"   // Version du firmware du capteur.
+#define FirmwareVersion "1.4.0"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
@@ -475,6 +476,9 @@ void nameHandler(const char *topic, const char *data) {
   }
 #endif
 
+// Declare the watchdog timer
+ApplicationWatchdog wd(TimeoutDelay, System.reset);
+
 /* Define a log handler on Serial1 for log messages */
 SerialLogHandler logHandler(115200, LOG_LEVEL_TRACE, {   // Logging level for non-application messages
     { "app", LOG_LEVEL_INFO }                      // Logging level for application messages
@@ -506,7 +510,7 @@ void setup() {
           pinMode(ValvePos_pin[i], INPUT_PULLUP);
       }
 
-      for (int i = 0; i<=numReadings; i++){ // Init readings array
+      for (int i = 0; i < numReadings; i++){ // Init readings array
           allDistReadings[i] = 0;
           allTempReadings[i] = 0;
       }
@@ -622,7 +626,7 @@ void setup() {
       pushToPublishQueue(evFinDeCoulee, false, millis());
     #endif
 
-    PhotonWdgs::begin(true, true, TimeoutDelay, TIMER7);
+    // PhotonWdgs::begin(true, true, TimeoutDelay, TIMER7);
     lastPublish = millis(); //Initialise le temps initial de publication
     changeTime = lastPublish; //Initialise le temps initial de changement de la pompe
 }
@@ -635,7 +639,7 @@ void loop(){
 // Execute every nextSampleTime(6 seconds)) read all sensors and reset watchdog
   if (loopTime - timeLastUnit >= (baseSampling * second)){
     digitalWrite(led, LOW); // Pour indiqué le début de la prise de mesure
-    PhotonWdgs::tickle(); // Reset watchdog
+    // PhotonWdgs::tickle(); // Reset watchdog
     readSelectedSensors(samplingIntervalCnt); //
     PublishAll(); // Check if theres something on the publish queue
     /*delay(20UL);  // Just to have a visible flash on the LED*/
@@ -729,7 +733,7 @@ void PublishAll(){
   // Publish all every maxPubDelay_ms
   if (now - lastAllPublish > maxPubDelay_ms){
 
-    Log.info("(PublishAll) - Time to publish: (now - lastAllPublish)= %u maxPubDelay_ms= %u", now - lastAllPublish, maxPubDelay_ms);
+    Log.info("(PublishAll) - Time to publish: (now - lastAllPublish)= %lu maxPubDelay_ms= %lu", now - lastAllPublish, maxPubDelay_ms);
     lastAllPublish = now;
 
     #if DISTANCESENSOR == US100
@@ -953,7 +957,7 @@ void readSelectedSensors(int sensorNo) {
           rawDistmm = currentReading;
           if((currentReading > 1) && (currentReading < maxRangeUS100)){       // normal distance should between 1mm and 2500 mm (1mm, 2,5m)
               dist_mm = AvgDistReading(currentReading); // Average the distance readings
-              Log.info("(ReadDistance_US100) - Dist.: %dmm, now= %d, lastPublish= %d, RSSI= %d", (int)(dist_mm / numReadings), now, lastPublish, (int8_t) WiFi.RSSI());
+              Log.info("(ReadDistance_US100) - Dist.: %dmm, now= %lu, lastPublish= %lu, RSSI= %d", (int)(dist_mm / numReadings), now, lastPublish, rssi);
               if (abs(dist_mm - prev_dist_mm) > minDistChange){         // Publish event in case of a change in temperature
                   lastPublish = now;                               // reset the max publish delay counter.
                   pushToPublishQueue(evDistance, (int)(dist_mm / numReadings), now);
@@ -987,7 +991,7 @@ void readSelectedSensors(int sensorNo) {
           if((Temp45 > 1) && (Temp45 < 130))   // Vérifier si la valeur est acceptable
           {
               TempUS100 = AvgTempReading(Temp45 - 45); //Conversion en température réelle et filtrage
-              Log.info("(Readtemp_US100) - Temp. US100: %dC now= %d, lastPublish= %d",  (int)(TempUS100/ numReadings), now, lastPublish); // Pour debug
+              Log.info("(Readtemp_US100) - Temp. US100: %dC now= %lu, lastPublish= %lu",  (int)(TempUS100/ numReadings), now, lastPublish); // Pour debug
               if (abs(TempUS100 - prev_TempUS100) > minTempChange){    // Vérifier s'il y a eu changement depuis la dernière publication
                       lastPublish = now;                     // Remise à zéro du compteur de délais de publication
                       pushToPublishQueue(evUS100Temperature, (int)(TempUS100 / numReadings), now); //Publication
@@ -1016,7 +1020,7 @@ void ReadTherm_US100(){
         if((Therm45 > 0) && (Therm45 < 255))   // Vérifier si la valeur est acceptable
         {
             TempThermUS100 = (Therm45 - 45); // Conversion en température réelle
-            Log.info("(ReadTherm_US100) -Temp. thermistor: %dC now= %d",  (byte)(Therm45 - 45), now); // Pour debug
+            Log.info("(ReadTherm_US100) -Temp. thermistor: %dC now= %lu",  (byte)(Therm45 - 45), now); // Pour debug
         }
     }
     Serial1.end();  // Le capteur US-100 fonctionne à 9600 baud
@@ -1033,7 +1037,7 @@ void ReadTherm_US100(){
       rawDistmm = currentReading;
       if((currentReading > 1) && (currentReading < maxRangeMB7389)){       // normal distance should between 1mm and 2500 mm (1mm, 2,5m)
           dist_mm = AvgDistReading(currentReading); // Average the distance readings
-          Log.info("(ReadDistance_MB7389) - Dist.: %dmm, now= %d, lastPublish= %d, RSSI= %d", (int)(dist_mm / numReadings), now, lastPublish, (int8_t) WiFi.RSSI());
+          Log.info("(ReadDistance_MB7389) - Dist.: %dmm, now= %lu, lastPublish= %lu, RSSI= %d", (int)(dist_mm / numReadings), now, lastPublish, rssi);
           if (abs(dist_mm - prev_dist_mm) > minDistChange){         // Publish event in case of a change in temperature
               lastPublish = now;                               // reset the max publish delay counter.
               pushToPublishQueue(evDistance, (int)(dist_mm / numReadings), now);
@@ -1157,6 +1161,7 @@ int AvgTempReading(int thisReading){
            }
 
       }
+      return(-99);
   }
 
   bool isValidDs18b20Reading(float reading){
@@ -1186,7 +1191,7 @@ int simpleThermostat(double setPoint){
             HeatingPower =  0.25 * (32767 *  MaxHeatingPowerPercent / 100UL); // Chauffage fixe au 1/4 de la puissance
         }
         analogWrite(heater, HeatingPower, 500);
-        Log.info("(simpleThermostat) - HeatingPower= %d, enclosureTemp= %0.1f, now= %d", HeatingPower, prev_EnclosureTemp, millis());
+        Log.info("(simpleThermostat) - HeatingPower= %d, enclosureTemp= %0.1f, now= %lu", HeatingPower, prev_EnclosureTemp, millis());
         // if (HeatingPower != prev_HeatingPower){
         //    pushToPublishQueue(evHeatingPowerLevel, HeatingPower, now);
         //    prev_HeatingPower = HeatingPower;
@@ -1353,7 +1358,7 @@ int remoteReset(String command) {
 // ou juste les numéros de série.
   } else if (command == "serialNo") {
     Particle.syncTime();
-    for (int i; i < 30; i++){
+    for (int i = 0; i < 30; i++){
         delay(100UL);
     }
     if (Time.isValid()){
@@ -1367,13 +1372,13 @@ int remoteReset(String command) {
         Log.info("(remoteReset) - Time is still invalid!: %lu", Time.now());
         return -1;
     }
-
 // ou redémarre en safe mode (pour forcer une mise à jour)
   } else if (command == "safeMode") {
     System.enterSafeMode();
   } else {
     return -1;
   }
+  return -1;
 }
 
 
@@ -1451,7 +1456,7 @@ int replayEvent(String command){
   } else {
     return -1; //Fail
   }
-  Log.info("(replayEvent) - ??? Demande de replay Event SN: %u, génération: %u,  writePtr= %u, readPtr= %u, replayBuffLen= %u",
+  Log.info("(replayEvent) - ??? Demande de replay Event SN: %u, génération: %lu,  writePtr= %u, readPtr= %u, replayBuffLen= %u",
                   targetSerNo, targetGen, writePtr, readPtr, replayBuffLen);
   if (replayBuffLen > 0){
       return -2; // Replay en cour - Attendre
@@ -1483,7 +1488,7 @@ int replayEvent(String command){
     } else {
         replayBuffLen = readPtr - replayPtr;
     }
-    Log.info("(replayEvent) - ??? Accepté pour replay Event no: %d, ReplayPtr= %u, writePtr= %u, readPtr= %u, replayBuffLen= %u, No de série courant= %u",
+    Log.info("(replayEvent) - ??? Accepté pour replay Event no: %d, ReplayPtr= %u, writePtr= %u, readPtr= %u, replayBuffLen= %u, No de série courant= %lu",
                     targetSerNo, replayPtr, writePtr, readPtr, replayBuffLen, noSerie);
     return 0; //success
   } else {
@@ -1524,14 +1529,14 @@ typedef struct Event{
 */
 // Formattage standard pour les données sous forme JSON
 String makeJSON(uint32_t numSerie, uint32_t timeStamp, uint32_t timer, int eData, String eName, bool replayFlag){
-    sprintf(publishString,"{\"noSerie\": %u,\"generation\": %lu,\"timestamp\": %lu,\"timer\": %lu,\"eData\":%d,\"eName\": \"%s\",\"replay\":%d}",
+    sprintf(publishString,"{\"noSerie\": %lu,\"generation\": %lu,\"timestamp\": %lu,\"timer\": %lu,\"eData\":%d,\"eName\": \"%s\",\"replay\":%d}",
                               numSerie, newGenTimestamp, timeStamp, timer, eData, eName.c_str(), replayFlag);
     Log.info ("(makeJSON) - makeJSON: %s",publishString);
     return publishString;
 }
 
 // Publie les événement et gère les no. de série et le stockage des événements
-bool pushToPublishQueue(uint8_t eventNamePtr, int eData, uint32_t timer){
+bool pushToPublishQueue(uint8_t eventNamePtr, int16_t eData, uint32_t timer){
   struct Event thisEvent;
   noSerie++;
   // if (noSerie >= 65534){
