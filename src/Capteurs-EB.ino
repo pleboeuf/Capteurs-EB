@@ -11,14 +11,14 @@
 // This #include statement was automatically added by the Particle IDE.
 #include "Particle.h"
 #include "spark-dallas-temperature.h"
-// #include "photon-wdgs.h"
+#include "math.h"
 
 STARTUP(WiFi.selectAntenna(ANT_AUTO));
 STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.4.0"   // Version du firmware du capteur.
+#define FirmwareVersion "1.5.0"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
@@ -34,7 +34,7 @@ dépendamment de cette configuration.
 */
 
 /********* Choisir la configuration de device à compiler *********/
-#define DEVICE_CONF 3
+#define DEVICE_CONF 0
 // Config pour:
 // P1, P2, P3 -> DEVICE_CONF == 0
 // V1, V2, V3 -> DEVICE_CONF == 1
@@ -223,20 +223,22 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define minute 60000UL            // 60000 millisecond per minute
 #define heure 3600000UL           // 3600000 millisecond par heure
 #define unJourEnMillis (24 * 60 * 60 * second)
-#define debounceDelay 50          // Debounce time for valve position readswitch
+#define debounceDelay 50          // Debounce time in milliseconds for valve position readswitch
+#define pumpDebounceDelay 25      // Debounce time in milliseconds for pump mechanical start/stop switch
 #define fastSampling  6000UL      // in milliseconds
 #define slowSampling  10000UL     // in milliseconds
 #define numReadings 10            // Number of readings to average for filtering
 #define minDistChange 2.0 * numReadings      // Minimum change in distance to publish an event (1/16")
 #define minTempChange 0.5 * numReadings      // Minimum temperature change to publish an event
-#define minVacuumChange 0.1       // Changement de 0.01 Po Hg avant publication du niveau de vide
+#define minVacuumChange 0.1       // Changement de 0.1 Po Hg avant publication du niveau de vide
+#define minVacuumForCoulee -5.0   // Minimum value a vacuum required to consider a pump operation as beginning a coulee
 #define maxRangeUS100 3000        // Distance maximale valide pour le captgeur
 #define maxRangeMB7389 1900       // Distance maximale valide pour le captgeur
 #define ONE_WIRE_BUS D4           //senseur sur D4
-#define DallasSensorResolution 10  // Résolution de lecture de température
+#define DallasSensorResolution 10 // Résolution de lecture de température
 #define MaxHeatingPowerPercent 80 // Puissance maximale appliqué sur la résistance de chauffage
 #define HeatingSetPoint 25        // Température cible à l'intérieur du boitier
-#define DefaultPubDelay 5     // Interval de publication en minutes par défaut
+#define DefaultPubDelay 5         // Interval de publication en minutes par défaut
 #define TimeoutDelay 6 * slowSampling // Device watch dog timer time limit
 #define pumpRunTimeLimit 3 * minute // Maximum pump run time before a warning is issued
 #define delaisFinDeCoulee 3 * heure // Temps sans activité de la pompe pour décréter la fin de la couléé
@@ -310,7 +312,7 @@ String eventName[] = {
 // Structure définissant un événement
 struct Event{
   uint32_t noSerie; // Le numéro de série est généré automatiquement
-  uint32_t timeStamp; // Timestamp du début d'une génération de noSerie.
+  time_t timeStamp; // Timestamp du début d'une génération de noSerie.
   uint32_t timer; // Temps depuis la mise en marche du capteur. Overflow après 49 jours.
   uint16_t namePtr; // Pointeur dans l'array des nom d'événement. (Pour sauver de l'espace NVRAM)
   int16_t eData;   // Données pour cet événement. Entier 16 bits. Pour sauvegarder des données en point flottant
@@ -454,6 +456,7 @@ void nameHandler(const char *topic, const char *data) {
       }
       void A1Handler() {
         // IMPORTANT: Pump is active LOW. Pump is ON when PumpCurrentState == false
+        delayMicroseconds(pumpDebounceDelay * 1000);
         PumpCurrentState = digitalRead(A1);
         changeTime = millis();
       }
@@ -487,7 +490,6 @@ SerialLogHandler logHandler(115200, LOG_LEVEL_TRACE, {   // Logging level for no
 /*******************************************************************************
     Setup Routine
 *******************************************************************************/
-
 void setup() {
   // Initialisation des pin I/O
       RGB.mirrorTo(RGBled_Red, RGBled_Green, RGBLed_Blue, true);
@@ -671,12 +673,13 @@ void PublishAll(){
   #endif
 
   #if PUMPMOTORDETECT
-  // Publication de l'état de la pompe s'il y a eu changement
+ 
+    // Publication de l'état de la pompe s'il y a eu changement
     if (PumpCurrentState != PumpOldState){
       if (PumpCurrentState == pumpONstate){
         pumpEvent = evPompe_T1;
         T1 = changeTime;
-        if (!couleeEnCour){
+        if (!couleeEnCour && prev_VacAnalogvalue < minVacuumForCoulee){
           couleeEnCour = true;
           #if (DEVICE_CONF == 0) // Événement pour les pompes 1 2 et 3 seulement
             pushToPublishQueue(evDebutDeCoulee, couleeEnCour, changeTime);
@@ -697,7 +700,7 @@ void PublishAll(){
           pushToPublishQueue(evPompe_T2_ONtime, T_ON, now);
         }
 
-        Log.info("T0= %d, T1= %d, T2= %d, dutyCycle : %.3f", T0, T1, T2, dutyCycle);
+        Log.info("T0= %lu, T1= %lu, T2= %lu, dutyCycle : %.3f", T0, T1, T2, dutyCycle);
         T0 = T2;
         #if (DEVICE_CONF == 0) // Événement pour les pompes 1 2 et 3 seulement
           pushToPublishQueue(evPumpEndCycle, (int)(dutyCycle * 1000), changeTime);
@@ -767,6 +770,7 @@ void PublishAll(){
       // Si la coulée est toujours en cour et le compteur de temps ne fait pas d'overflow et que la pompe est arrêté
       // depuis plus longtemps que le cycle précédent alors on recalcule le dutycycle et on publie un nouvel événement.
       // On assume que le temps ON de la pompe est le même qu'au cycle précédent.
+      Log.info("(PublishAll) - Coulée en cour: %d, PumpState: %d, T0: %lu, T1: %lu, T_ON: %lu, T_cycle: %lu", couleeEnCour, PumpCurrentState, T0, T1, T_ON, T_Cycle);
       if (couleeEnCour && PumpCurrentState == pumpOFFstate && now > T0 && (now - T0 + T_ON) > T_Cycle){
         float T_Cycle_est = (now - T0 + T_ON);    // Temps de cycle estimé
         dutyCycle = (float)T_ON / T_Cycle_est;
@@ -811,7 +815,7 @@ void PublishAll(){
 //*******************************************************************************
 void readSelectedSensors(int sensorNo) {
   now = millis();
-  Log.info("\n(readSelectedSensors) - Now reading sensorNo: %d", sensorNo);
+  Log.info("readSelectedSensors) - Now reading sensorNo: %d", sensorNo);
 
   switch (sensorNo)
   {
@@ -1033,7 +1037,7 @@ void ReadTherm_US100(){
       MB7389_pulse = pulseIn(MB7389_pin2, HIGH);
       long currentReading = MB7389_pulse;
       Log.info("(ReadDistance_MB7389) - Distance meas routine: ReadDistance_MB7389");
-      Log.info("(ReadDistance_MB7389) - MB7389latestReading: %d", currentReading);
+      Log.info("(ReadDistance_MB7389) - MB7389latestReading: %lu", currentReading);
       rawDistmm = currentReading;
       if((currentReading > 1) && (currentReading < maxRangeMB7389)){       // normal distance should between 1mm and 2500 mm (1mm, 2,5m)
           dist_mm = AvgDistReading(currentReading); // Average the distance readings
@@ -1052,7 +1056,7 @@ void ReadTherm_US100(){
             pushToPublishQueue(evOutOfRange, dist_mm, now);
             prev_dist_mm = dist_mm;
             Log.info("(ReadDistance_MB7389) - Hors portée: ");             // output distance to serial monitor
-            Log.info("(ReadDistance_MB7389) - currentReading: %d mm", currentReading);
+            Log.info("(ReadDistance_MB7389) - currentReading: %lu mm", currentReading);
           }
       }
    }
@@ -1208,8 +1212,8 @@ Section réservé pour le code de mesure du vide (vacuum)
   void VacReadVacuumSensor(){
     int val = analogRead(VacuumSensor);
     double VacAnalogvalue = VacRaw2kPa(val, VacCalibration);
-    Log.info("(VacReadVacuumSensor) - Vac raw= %d, VacAnalogvalue= %f, DeltaVac= %f", val, VacAnalogvalue, abs(VacAnalogvalue - prev_VacAnalogvalue) );
-    if (abs(VacAnalogvalue - prev_VacAnalogvalue) > minVacuumChange){  // Publish event in case of a change in vacuum
+    Log.info("(VacReadVacuumSensor) - Vac raw= %d, VacAnalogvalue= %f, DeltaVac= %f", val, VacAnalogvalue, fabs(VacAnalogvalue - prev_VacAnalogvalue) );
+    if (fabs(VacAnalogvalue - prev_VacAnalogvalue) > minVacuumChange){  // Publish event in case of a change in vacuum
         lastPublish = now;                                             // reset the max publish delay counter.
         pushToPublishQueue(evVacuum, (int)(VacAnalogvalue * 100), now); // The measurements value is converted to integers for storage in the event buffer
         prev_VacAnalogvalue = VacAnalogvalue;                          // The value will be divided by 10 for display to recover the decimal
