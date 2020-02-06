@@ -18,7 +18,7 @@ STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.6.0"   // Version du firmware du capteur.
+#define FirmwareVersion "1.7.0"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
@@ -240,7 +240,8 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define HeatingSetPoint 25        // Température cible à l'intérieur du boitier
 #define DefaultPubDelay 5         // Interval de publication en minutes par défaut
 #define TimeoutDelay 6 * slowSampling // Device watch dog timer time limit
-#define pumpRunTimeLimit 3 * minute // Maximum pump run time before a warning is issued
+#define pumpRunTimeLimit 2 * minute // Maximum pump run time before a warning is issued
+#define pumpMinRunTime 17 * second // Ignore cycles where pump is running less than 17 seconds
 #define delaisFinDeCoulee 3 * heure // Temps sans activité de la pompe pour décréter la fin de la couléé
 #define pumpONstate 0             // Pump signal is active low.
 #define pumpOFFstate 1            // Pump signal is active low.
@@ -357,18 +358,18 @@ int heater = D3;                  //Contrôle le transistor du chauffage
 int rssi = 0;
 
 // Variables liés à la pompe
-bool PumpOldState = pumpOFFstate;           // Pour déterminer le chanement d'état
-bool PumpCurrentState = pumpOFFstate; // Initialize pump in the OFF state
-bool PumpWarning = false;           // Alerte pour indiquer que la pompe fonctionne trop longtemps
-bool couleeEnCour = false;          // État de la coulée
-volatile unsigned long changeTime = 0;       // Moment du dernier changement d'état de la pompe
-volatile unsigned long T0 = millis();               // Début d'un cycle. (pompe arrête)
-volatile unsigned long T1 = T0;               // Milieu d'un cycle. (pompe démarre)
-volatile unsigned long T2 = T0;               // Fin d'un cycle. (pompe arrête), égale T0 du cycle suivant.
-volatile unsigned long T_ON = 0;             // Pump ON time
-volatile unsigned long T_OFF = 0;            // Pump OFF time
-unsigned long T_Cycle = 100000UL;   // Pump cycle time
-double dutyCycle = 0;               // Duty cycle du dernier cycle de la pompe.
+bool PumpOldState = pumpOFFstate;          // Pour déterminer le chanement d'état
+bool PumpCurrentState = pumpOFFstate;      // Initialize pump in the OFF state
+bool PumpWarning = false;                  // Alerte pour indiquer que la pompe fonctionne trop longtemps
+bool couleeEnCour = false;                 // État de la coulée
+volatile unsigned long changeTime = 0;     // Moment du dernier changement d'état de la pompe
+volatile unsigned long T0 = millis();      // Début d'un cycle. (pompe arrête)
+volatile unsigned long T1 = T0 + 200000000; // Milieu d'un cycle. (pompe démarre)
+volatile unsigned long T2 = T1 + 20000;    // Fin d'un cycle. (pompe arrête), égale T0 du cycle suivant.
+volatile unsigned long T_ON = 0;           // Pump ON time
+volatile unsigned long T_OFF = 0;          // Pump OFF time
+unsigned long T_Cycle = 100000UL;          // Pump cycle time
+double dutyCycle = 0;                      // Duty cycle du dernier cycle de la pompe.
 
 // Variables liés aux valves
 int ValvePos_pin[] = {A5, A4, A3, A2};
@@ -626,7 +627,7 @@ void setup() {
     Particle.syncTime();
     pushToPublishQueue(evBootTimestamp, 0,  millis());
     #if (DEVICE_CONF == 0) // Événement pour les pompes 1 2 et 3 seulement
-      pushToPublishQueue(evPumpEndCycle, 0, millis());
+      pushToPublishQueue(evPumpEndCycle, 1, millis());
       pushToPublishQueue(evFinDeCoulee, false, millis());
     #endif
 
@@ -665,6 +666,8 @@ void loop(){
 void PublishAll(){
   // Publie au moins une fois à tous les "maxPubDelay_ms" millisecond
   unsigned long now = millis();
+  static unsigned long Old_T1 = 0;
+  static unsigned long Old_T2 = 0;
 
   #if HASVALVES
     CheckValvePos(false); // publish if valve state changed
@@ -679,10 +682,13 @@ void PublishAll(){
     // À faire lors d'un changement dans l'état de la pompe
     if (PumpCurrentState != PumpOldState)
     {
+      //
       // À faire quand la pompe se met en marche (Pump ON)
+      //
       if (PumpCurrentState == pumpONstate)
       {
         pumpEvent = evPompe_T1;
+        Old_T1 = T1;
         T1 = changeTime;
         // S'assurer qu'il n'y a pas eu d'overflow des compteurs
         // Si il n'y a pas de coulée en cour et que la pompe à vide est en fonction -> débuté la coulée
@@ -693,40 +699,42 @@ void PublishAll(){
             pushToPublishQueue(evDebutDeCoulee, couleeEnCour, changeTime);
           #endif
         }
-      } 
-      else 
-      // À faire quand la pompe s'arrête (Pump OFF)
-      // Un cycle se termine (T2) et un autre commence (T0)
+      } else 
       {
+        //
+        // À faire quand la pompe s'arrête (Pump OFF)
+        // Un cycle se termine (T2) et un autre commence (T0)
+        //
         pumpEvent = evPompe_T2;
+        Old_T2 = T2;
         T2 = changeTime;
         // S'assurer qu'il n'y a pas eu d'overflow des compteurs avant de calculer le dutyCycle
-        if (T2 > T1 && T1 > T0) 
-        {
+        // et que le temps de marche de la pompe est acceptable
+        if ((T2 > T1 && T1 > T0) && (T2 - T1 > pumpMinRunTime) && (T2 - T1 < pumpRunTimeLimit)) {
           T_ON = (T2 - T1);     // Temps de marche de la pompe
           T_OFF = (T1 - T0);
           T_Cycle = (T2 - T0);  // Temps de cycle total.
           // Calculer le dutyCycle si la pompe n'est pas resté en marche trop longtemps.
-          if (T_ON < pumpRunTimeLimit)
-          {
-            dutyCycle = (float)T_ON / (float)T_Cycle; // In case of overflow of T1 or T2, assume the dutycycle did not changed.
-          }
+          dutyCycle = (float)T_ON / (float)T_Cycle; // In case of overflow of T1 or T2, assume the dutycycle did not changed.
           pushToPublishQueue(evPompe_T1_OFFtime, T_OFF, now);
           pushToPublishQueue(evPompe_T2_ONtime, T_ON, now);
-          Log.info("(PublishAll) - T_OFF: %lu", T_OFF);
-          Log.info("(PublishAll) - T_ON: %lu", T_ON);
+          Log.info("(PublishAll) - T_OFF: %lu ms", T_OFF);
+          Log.info("(PublishAll) - T_ON: %lu ms", T_ON);
           Log.info("(PublishAll) - dutyCycle: %f", dutyCycle);
+          Log.info("T0= %lu, T1= %lu, T2= %lu, dutyCycle : %.3f", T0, T1, T2, dutyCycle);
+          T0 = T2;
+          #if (DEVICE_CONF == 0) // Événement pour les pompes P1,P2 et P3 seulement
+            pushToPublishQueue(evPumpEndCycle, (int)(dutyCycle * 1000), changeTime);
+          #endif
+        } else 
+        {
+          T1 = Old_T1;
+          T2 = Old_T2;
         }
-
-        Log.info("T0= %lu, T1= %lu, T2= %lu, dutyCycle : %.3f", T0, T1, T2, dutyCycle);
-        T0 = T2;
-        #if (DEVICE_CONF == 0) // Événement pour les pompes P1,P2 et P3 seulement
-          pushToPublishQueue(evPumpEndCycle, (int)(dutyCycle * 1000), changeTime);
-        #endif
       }
 
       pushToPublishQueue(pumpEvent, PumpCurrentState, changeTime);
-      pushToPublishQueue(evPumpCurrentState, PumpCurrentState, changeTime);
+      // pushToPublishQueue(evPumpCurrentState, PumpCurrentState, changeTime);
       PumpOldState = PumpCurrentState;
     }  
 
