@@ -18,7 +18,7 @@ STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.5.0"   // Version du firmware du capteur.
+#define FirmwareVersion "1.6.0"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
@@ -223,8 +223,8 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define minute 60000UL            // 60000 millisecond per minute
 #define heure 3600000UL           // 3600000 millisecond par heure
 #define unJourEnMillis (24 * 60 * 60 * second)
-#define debounceDelay 50          // Debounce time in milliseconds for valve position readswitch
-#define pumpDebounceDelay 25      // Debounce time in milliseconds for pump mechanical start/stop switch
+#define valveDebounceDelay 50     // Debounce time in milliseconds for valve position readswitch
+#define pumpDebounceDelay 50      // Debounce time in milliseconds for pump mechanical start/stop switch
 #define fastSampling  6000UL      // in milliseconds
 #define slowSampling  10000UL     // in milliseconds
 #define numReadings 10            // Number of readings to average for filtering
@@ -264,7 +264,7 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define evPumpEndCycle 5            // Événement fin d'un cycle de pompe
 #define evRunTooLong 6              // Alerte Pompe en marche depuis plus de 5 min. Inutilisé.
 #define evDebutDeCoulee 7           // Début de coulée. Inutilisé.
-#define evFinDeCoulee 8             // Fin de coulée. Inutilisé
+#define evFinDeCoulee 8             // Fin de coulée. 
 #define evRelais 9
 #define evVacuum 10
 #define evFlowmeterFlow 11
@@ -278,8 +278,9 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define evValve1_Position 19
 #define evValve2_Position 20
 #define evPumpCurrentState 21
-#define CurrentDutyCycle 22
-#define evPompe_T2_ONtime 23
+#define evCurrentDutyCycle 22
+#define evPompe_T1_OFFtime 23
+#define evPompe_T2_ONtime 24
 
 // Table des nom d'événements
 String eventName[] = {
@@ -306,6 +307,7 @@ String eventName[] = {
   "sensor/Valve2Pos",               // Valve 2 position string
   "pump/state",                     // Étant actuel de la pompe
   "pump/CurrentDutyCycle",          // Étant actuel du dutyCycle
+  "pump/T1_OFFtime",                // Durée de marche de la pompe en millisecondes
   "pump/T2_ONtime"                  // Durée de marche de la pompe en millisecondes
   };
 
@@ -313,15 +315,15 @@ String eventName[] = {
 struct Event{
   uint32_t noSerie; // Le numéro de série est généré automatiquement
   time_t timeStamp; // Timestamp du début d'une génération de noSerie.
-  uint32_t timer; // Temps depuis la mise en marche du capteur. Overflow après 49 jours.
+  uint32_t timer;   // Temps depuis la mise en marche du capteur. Overflow après 49 jours.
   uint16_t namePtr; // Pointeur dans l'array des nom d'événement. (Pour sauver de l'espace NVRAM)
-  int16_t eData;   // Données pour cet événement. Entier 16 bits. Pour sauvegarder des données en point flottant
-                   // multiplié d'abord la donnée par un facteur (1000 par ex.) et convertir en entier.
-                   // Il suffira de divisé la données au moment de la réception de l'événement.
+  unsigned int eData; // Données pour cet événement. Entier 32 bits. Pour sauvegarder des données en point flottant
+                    // multiplié d'abord la donnée par un facteur (1000 par ex.) et convertir en entier.
+                    // Il suffira de divisé la données au moment de la réception de l'événement.
 };
 
 // Variable relié à l'opération du buffer circulaire
-const int buffSize = 190; // Nombre max d'événements que l'on peut sauvegarder
+const int buffSize = 151; // Nombre max d'événements que l'on peut sauvegarder
 retained struct Event eventBuffer[buffSize];
 retained unsigned int buffLen = 0;
 retained unsigned int writePtr = 0;
@@ -359,12 +361,13 @@ bool PumpOldState = pumpOFFstate;           // Pour déterminer le chanement d'�
 bool PumpCurrentState = pumpOFFstate; // Initialize pump in the OFF state
 bool PumpWarning = false;           // Alerte pour indiquer que la pompe fonctionne trop longtemps
 bool couleeEnCour = false;          // État de la coulée
-unsigned long changeTime = 0;       // Moment du dernier changement d'état de la pompe
-unsigned long T0 = 0;               // Début d'un cycle. (pompe arrête)
-unsigned long T1 = 0;               // Milieu d'un cycle. (pompe démarre)
-unsigned long T2 = 0;               // Fin d'un cycle. (pompe arrête), égale T0 du cycle suivant.
-unsigned long T_ON = 0;             // Pump ON time
-unsigned long T_Cycle = 100000UL;     // Pump OFF time
+volatile unsigned long changeTime = 0;       // Moment du dernier changement d'état de la pompe
+volatile unsigned long T0 = millis();               // Début d'un cycle. (pompe arrête)
+volatile unsigned long T1 = T0;               // Milieu d'un cycle. (pompe démarre)
+volatile unsigned long T2 = T0;               // Fin d'un cycle. (pompe arrête), égale T0 du cycle suivant.
+volatile unsigned long T_ON = 0;             // Pump ON time
+volatile unsigned long T_OFF = 0;            // Pump OFF time
+unsigned long T_Cycle = 100000UL;   // Pump cycle time
 double dutyCycle = 0;               // Duty cycle du dernier cycle de la pompe.
 
 // Variables liés aux valves
@@ -404,7 +407,6 @@ int allDistReadings[numReadings];
 // Variables liés au temps
 unsigned long lastPublish = millis();
 unsigned long lastAllPublish = 0;
-unsigned long now;
 unsigned long lastRTCSync = millis();
 unsigned int samplingInterval = fastSampling;
 unsigned int samplingIntervalCnt = 4;
@@ -578,7 +580,7 @@ void setup() {
     WiFi.connect();
 
 // Attendre la connection au nuage
-    Log.info("En attente... ");
+    Log.info("En attente...");
     Particle.connect();
     if (waitFor(Particle.connected, 10000)) {
       delay(1000);
@@ -662,7 +664,7 @@ void loop(){
 *******************************************************************************/
 void PublishAll(){
   // Publie au moins une fois à tous les "maxPubDelay_ms" millisecond
-  now = millis();
+  unsigned long now = millis();
 
   #if HASVALVES
     CheckValvePos(false); // publish if valve state changed
@@ -674,51 +676,74 @@ void PublishAll(){
 
   #if PUMPMOTORDETECT
  
-    // Publication de l'état de la pompe s'il y a eu changement
-    if (PumpCurrentState != PumpOldState){
-      if (PumpCurrentState == pumpONstate){
+    // À faire lors d'un changement dans l'état de la pompe
+    if (PumpCurrentState != PumpOldState)
+    {
+      // À faire quand la pompe se met en marche (Pump ON)
+      if (PumpCurrentState == pumpONstate)
+      {
         pumpEvent = evPompe_T1;
         T1 = changeTime;
-        if (!couleeEnCour && prev_VacAnalogvalue < minVacuumForCoulee){
+        // S'assurer qu'il n'y a pas eu d'overflow des compteurs
+        // Si il n'y a pas de coulée en cour et que la pompe à vide est en fonction -> débuté la coulée
+        if (!couleeEnCour && prev_VacAnalogvalue < minVacuumForCoulee)
+        {
           couleeEnCour = true;
-          #if (DEVICE_CONF == 0) // Événement pour les pompes 1 2 et 3 seulement
+          #if (DEVICE_CONF == 0) // Événement pour les pompes P1,P2 et P3 seulement
             pushToPublishQueue(evDebutDeCoulee, couleeEnCour, changeTime);
           #endif
         }
-      } else {
+      } 
+      else 
+      // À faire quand la pompe s'arrête (Pump OFF)
+      // Un cycle se termine (T2) et un autre commence (T0)
+      {
         pumpEvent = evPompe_T2;
         T2 = changeTime;
         // S'assurer qu'il n'y a pas eu d'overflow des compteurs avant de calculer le dutyCycle
-        if (T2 > T1 && T1 > T0) {
+        if (T2 > T1 && T1 > T0) 
+        {
           T_ON = (T2 - T1);     // Temps de marche de la pompe
+          T_OFF = (T1 - T0);
           T_Cycle = (T2 - T0);  // Temps de cycle total.
           // Calculer le dutyCycle si la pompe n'est pas resté en marche trop longtemps.
-          if (!(T_ON > pumpRunTimeLimit)){
+          if (T_ON < pumpRunTimeLimit)
+          {
             dutyCycle = (float)T_ON / (float)T_Cycle; // In case of overflow of T1 or T2, assume the dutycycle did not changed.
-            // if (dutyCycle < 0.005) {dutyCycle = 0;}
           }
+          pushToPublishQueue(evPompe_T1_OFFtime, T_OFF, now);
           pushToPublishQueue(evPompe_T2_ONtime, T_ON, now);
+          Log.info("(PublishAll) - T_OFF: %lu", T_OFF);
+          Log.info("(PublishAll) - T_ON: %lu", T_ON);
+          Log.info("(PublishAll) - dutyCycle: %f", dutyCycle);
         }
 
         Log.info("T0= %lu, T1= %lu, T2= %lu, dutyCycle : %.3f", T0, T1, T2, dutyCycle);
         T0 = T2;
-        #if (DEVICE_CONF == 0) // Événement pour les pompes 1 2 et 3 seulement
+        #if (DEVICE_CONF == 0) // Événement pour les pompes P1,P2 et P3 seulement
           pushToPublishQueue(evPumpEndCycle, (int)(dutyCycle * 1000), changeTime);
         #endif
       }
+
       pushToPublishQueue(pumpEvent, PumpCurrentState, changeTime);
       pushToPublishQueue(evPumpCurrentState, PumpCurrentState, changeTime);
-
       PumpOldState = PumpCurrentState;
-    }
+    }  
 
     // Si la coulée est en cour ET la pompe est arrêté depuis plus longtemps que le délais établit (3h)
     // alors marque la coulée comme arrêté et émettre un événement de fin de coulée.
-    #if (DEVICE_CONF == 0) // Événement pour les pompes 1 2 et 3 seulement
-      if (couleeEnCour && PumpCurrentState == pumpOFFstate && ((now - T0) > delaisFinDeCoulee) ){
-        couleeEnCour = false;
-        pushToPublishQueue(evFinDeCoulee, couleeEnCour, now);
+    #if (DEVICE_CONF == 0) // Événement pour les pompes P1,P2 et P3 seulement
+      // Occasionnellement T2 est plus grand que now parse que la valeur de T2 est changé par une interruption 
+      if (now  > T2) {
+        bool delaisExpire = ((now - T2) > delaisFinDeCoulee);
+        if (couleeEnCour && (PumpCurrentState == pumpOFFstate) && delaisExpire){
+          Log.printf("Condition en fin de coulée - couleeEnCour: %s, pumpState: %s, now: %lu, T2: %lu, delaisExpire: %s\n", 
+                    couleeEnCour ? "true" : "false", PumpCurrentState ? "true" : "false", now, T2, delaisExpire ? "true" : "false");
+          couleeEnCour = false;
+          pushToPublishQueue(evFinDeCoulee, couleeEnCour, now);
+        }
       }
+
     // Publier un avertissement si la pompe fonctionne depuis trop longtemps
       if (PumpCurrentState == pumpONstate && ((now - lastRunWarning) > 1 * minute)){
         if (now > T1){
@@ -771,12 +796,13 @@ void PublishAll(){
       // depuis plus longtemps que le cycle précédent alors on recalcule le dutycycle et on publie un nouvel événement.
       // On assume que le temps ON de la pompe est le même qu'au cycle précédent.
       Log.info("(PublishAll) - Coulée en cour: %d, PumpState: %d, T0: %lu, T1: %lu, T_ON: %lu, T_cycle: %lu", couleeEnCour, PumpCurrentState, T0, T1, T_ON, T_Cycle);
-      if (couleeEnCour && PumpCurrentState == pumpOFFstate && now > T0 && (now - T0 + T_ON) > T_Cycle){
+      if (couleeEnCour && (PumpCurrentState == pumpOFFstate) && (now > T0) && ((now - T0 + T_ON) > T_Cycle))
+      {
         float T_Cycle_est = (now - T0 + T_ON);    // Temps de cycle estimé
         dutyCycle = (float)T_ON / T_Cycle_est;
         if (dutyCycle < 0.005) {dutyCycle = 0;}  // Mettre à zéro si inférieur à 0.5%
-        #if (DEVICE_CONF == 0) // Événement pour les pompes 1 2 et 3 seulement
-          pushToPublishQueue(CurrentDutyCycle, (int)(dutyCycle * 1000), now);
+        #if (DEVICE_CONF == 0) // Événement pour les pompes P1 ,P2 et P3 seulement
+          pushToPublishQueue(evCurrentDutyCycle, (int)(dutyCycle * 1000), now);
         #endif
       }
       // Publication de l'état de la pompe à interval
@@ -799,12 +825,14 @@ void PublishAll(){
   }
 // Publier les événements se trouvant dans le buffer
   if(buffLen > 0){
-    Log.info("BufferLen = %u, Cloud = %s", buffLen, (Particle.connected() ? "true" : "false")); // Pour debug
-    bool success = publishQueuedEvents();
-    Log.info("Publishing = %u, Status: %s", readPtr - 1, (success ? "Fait" : "Pas Fait")); // Pour debug
+    // Log.info("BufferLen = %u, Cloud = %s", buffLen, (Particle.connected() ? "true" : "false")); // Pour debug
+    publishQueuedEvents();
+    // bool success = publishQueuedEvents();
+    // Log.info("Publishing = %u, Status: %s", readPtr - 1, (success ? "Fait" : "Pas Fait")); // Pour debug
   } else if (replayBuffLen > 0){
-    bool success = replayQueuedEvents();
-    Log.info("replayBuffLen = %u, Replay = %u, Status: %s", replayBuffLen, replayPtr, (success ? "Fait" : "Pas Fait"));
+    replayQueuedEvents();
+    // bool success = replayQueuedEvents();
+    // Log.info("replayBuffLen = %u, Replay = %u, Status: %s", replayBuffLen, replayPtr, (success ? "Fait" : "Pas Fait"));
   }
 }
 
@@ -814,8 +842,7 @@ void PublishAll(){
 //  If no sensor is present, the compiler substitute a delay of 20ms to get a visible flash on the activity led
 //*******************************************************************************
 void readSelectedSensors(int sensorNo) {
-  now = millis();
-  Log.info("readSelectedSensors) - Now reading sensorNo: %d", sensorNo);
+  // Log.info("readSelectedSensors) - Now reading sensorNo: %d", sensorNo);
 
   switch (sensorNo)
   {
@@ -1214,8 +1241,8 @@ Section réservé pour le code de mesure du vide (vacuum)
     double VacAnalogvalue = VacRaw2kPa(val, VacCalibration);
     Log.info("(VacReadVacuumSensor) - Vac raw= %d, VacAnalogvalue= %f, DeltaVac= %f", val, VacAnalogvalue, fabs(VacAnalogvalue - prev_VacAnalogvalue) );
     if (fabs(VacAnalogvalue - prev_VacAnalogvalue) > minVacuumChange){  // Publish event in case of a change in vacuum
-        lastPublish = now;                                             // reset the max publish delay counter.
-        pushToPublishQueue(evVacuum, (int)(VacAnalogvalue * 100), now); // The measurements value is converted to integers for storage in the event buffer
+        lastPublish = millis();                                             // reset the max publish delay counter.
+        pushToPublishQueue(evVacuum, (int)(VacAnalogvalue * 100), lastPublish); // The measurements value is converted to integers for storage in the event buffer
         prev_VacAnalogvalue = VacAnalogvalue;                          // The value will be divided by 10 for display to recover the decimal
     }
   }
@@ -1258,12 +1285,13 @@ Section réservé pour le code de mesure du vide (vacuum)
 // when statusAll is true, publish even if there no change in the state
 void CheckValvePos(bool statusAll){
     bool valveCurrentState = false;
+    unsigned long now = 0;
     String stateStr = "";
     String positionCode[] = {"Erreur", "Ouvert", "Fermé", "Partiel"};
     for (int i=0; i <= 3; i++) {
         valveCurrentState = digitalRead(ValvePos_pin[i]);
         if ((ValvePos_state[i] != valveCurrentState) || statusAll == true){
-            delay(debounceDelay);  // Debounce time
+            delay(valveDebounceDelay);  // Debounce time
             // time_t time = Time.now();
             valveCurrentState = digitalRead(ValvePos_pin[i]);
             ValvePos_state[i] = valveCurrentState;
@@ -1311,15 +1339,15 @@ int toggleRelay(String command) {
         RelayState = HIGH;
         digitalWrite(ssrRelay, RelayState);
         /*Particle.publish("Relais", "on", 60, PRIVATE);*/
-        pushToPublishQueue(evRelais, RelayState, now);
+        pushToPublishQueue(evRelais, RelayState, millis());
         return 1;
     }
     else if (command=="off" || command=="0") {
         RelayState = LOW;
         digitalWrite(ssrRelay, RelayState);
         /*Particle.publish("Relais", "off", 60, PRIVATE);*/
-        pushToPublishQueue(evRelais, RelayState, now);
-         return 0;
+        pushToPublishQueue(evRelais, RelayState, millis());
+        return 0;
     }
     else {
         return -1;
@@ -1452,7 +1480,7 @@ struct Event peekEvent(uint16_t peekReadPtr){
 // Format de la string de command: "Target SN, Target generation Id"
 int replayEvent(String command){
   time_t targetGen;
-  uint16_t targetSerNo;
+  uint32_t targetSerNo;
   int sep = command.indexOf(",");
   if (sep > 0){
     targetSerNo = command.substring(0, sep).toInt();
@@ -1460,7 +1488,7 @@ int replayEvent(String command){
   } else {
     return -1; //Fail
   }
-  Log.info("(replayEvent) - ??? Demande de replay Event SN: %u, génération: %lu,  writePtr= %u, readPtr= %u, replayBuffLen= %u",
+  Log.info("(replayEvent) - ??? Demande de replay Event SN: %lu, génération: %lu,  writePtr= %u, readPtr= %u, replayBuffLen= %u",
                   targetSerNo, targetGen, writePtr, readPtr, replayBuffLen);
   if (replayBuffLen > 0){
       return -2; // Replay en cour - Attendre
@@ -1469,7 +1497,7 @@ int replayEvent(String command){
   if (targetSerNo >= 0 && targetGen > 0){ // Le numéro recherché doit être plus grand que 0
     // Validation
     if (targetGen != newGenTimestamp){
-      Log.info("(replayEvent) - ??? Error -99: targetGen= %lu, targetSerNo= %u", targetGen, targetSerNo);
+      Log.info("(replayEvent) - ??? Error -99: targetGen= %lu, targetSerNo= %lu", targetGen, targetSerNo);
       return -99; // "invalid generation id"
     }
     if (targetSerNo >= noSerie){ // et plus petit que le numéro de série courant
@@ -1492,7 +1520,7 @@ int replayEvent(String command){
     } else {
         replayBuffLen = readPtr - replayPtr;
     }
-    Log.info("(replayEvent) - ??? Accepté pour replay Event no: %d, ReplayPtr= %u, writePtr= %u, readPtr= %u, replayBuffLen= %u, No de série courant= %lu",
+    Log.info("(replayEvent) - ??? Accepté pour replay Event no: %lu, ReplayPtr= %u, writePtr= %u, readPtr= %u, replayBuffLen= %u, No de série courant= %lu",
                     targetSerNo, replayPtr, writePtr, readPtr, replayBuffLen, noSerie);
     return 0; //success
   } else {
@@ -1525,27 +1553,24 @@ struct Event replayReadEvent(){
 
 /*
 typedef struct Event{
-  uint16_t noSerie; // Le numéro de série est généré automatiquement
+  uint32_t noSerie; // Le numéro de série est généré automatiquement
   uint32_t eSnGen; // Timestamp du début d'une série de noSerie.
   uint32_t timer; // Temps depuis la mise en marche du capteur. Overflow après 49 jours.
   uint8_t namePtr; // Pointeur dans l'array des nom d'événement. (Pour sauver de l'espace NVRAM)
-  int16_t eData;   // Données pour cet événement. Entier 16 bits. Pour sauvegarder des données en point flottant
+  int32_t eData;   // Données pour cet événement. Entier 16 bits. Pour sauvegarder des données en point flottant
 */
 // Formattage standard pour les données sous forme JSON
 String makeJSON(uint32_t numSerie, uint32_t timeStamp, uint32_t timer, int eData, String eName, bool replayFlag){
     sprintf(publishString,"{\"noSerie\": %lu,\"generation\": %lu,\"timestamp\": %lu,\"timer\": %lu,\"eData\":%d,\"eName\": \"%s\",\"replay\":%d}",
                               numSerie, newGenTimestamp, timeStamp, timer, eData, eName.c_str(), replayFlag);
-    Log.info ("(makeJSON) - makeJSON: %s",publishString);
+    // Log.info ("(makeJSON) - makeJSON: %s",publishString);
     return publishString;
 }
 
 // Publie les événement et gère les no. de série et le stockage des événements
-bool pushToPublishQueue(uint8_t eventNamePtr, int16_t eData, uint32_t timer){
+bool pushToPublishQueue(uint8_t eventNamePtr, uint32_t eData, uint32_t timer){
   struct Event thisEvent;
   noSerie++;
-  // if (noSerie >= 65534){
-  //   remoteReset("serialNo"); // Bump up the generation number and reset the serial no.
-  //   }
   thisEvent = {noSerie, Time.now(), timer, eventNamePtr, eData};
   Log.info("(pushToPublishQueue) - >>>> pushToPublishQueue::: " + eventName[eventNamePtr]);
   writeEvent(thisEvent); // Pousse les données dans le buffer circulaire
@@ -1557,7 +1582,7 @@ bool publishQueuedEvents(){
     bool publishSuccess = false;
     struct Event thisEvent = {};
     bool replayFlag = false; // not a replay
-    Log.info("(publishQueuedEvents) - < publishQueuedEvents:::");
+    // Log.info("(publishQueuedEvents) - < publishQueuedEvents:::");
     thisEvent = peekEvent(readPtr);
     if (sizeof(thisEvent) == 0){
         return publishSuccess; // Rien à publié
