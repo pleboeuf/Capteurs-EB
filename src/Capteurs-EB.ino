@@ -34,7 +34,7 @@ dépendamment de cette configuration.
 */
 
 /********* Choisir la configuration de device à compiler *********/
-#define DEVICE_CONF 0
+#define DEVICE_CONF 1
 // Config pour:
 // P1, P2, P3 -> DEVICE_CONF == 0
 // V1, V2, V3 -> DEVICE_CONF == 1
@@ -672,8 +672,10 @@ void loop(){
 void PublishAll(){
   // Publie au moins une fois à tous les "maxPubDelay_ms" millisecond
   unsigned long now = millis();
-  static unsigned long Old_T1 = 0;
-  static unsigned long Old_T2 = 0;
+   #if (DEVICE_CONF == 0) // Événement pour les pompes P1,P2 et P3 seulement
+    static unsigned long Old_T1 = 0;
+    static unsigned long Old_T2 = 0;
+  #endif
 
   #if HASVALVES
     CheckValvePos(false); // publish if valve state changed
@@ -694,17 +696,17 @@ void PublishAll(){
       if (PumpCurrentState == pumpONstate)
       {
         pumpEvent = evPompe_T1;
-        Old_T1 = T1;
+        #if (DEVICE_CONF == 0) // Événement pour les pompes P1,P2 et P3 seulement
+          // S'assurer qu'il n'y a pas eu d'overflow des compteurs
+          // Si il n'y a pas de coulée en cour et que la pompe à vide est en fonction -> débuté la coulée
+          if (!couleeEnCour && prev_VacAnalogvalue < minVacuumForCoulee)
+          {
+            couleeEnCour = true;
+              pushToPublishQueue(evDebutDeCoulee, couleeEnCour, changeTime);
+          }
+          Old_T1 = T1;
+        #endif
         T1 = changeTime;
-        // S'assurer qu'il n'y a pas eu d'overflow des compteurs
-        // Si il n'y a pas de coulée en cour et que la pompe à vide est en fonction -> débuté la coulée
-        if (!couleeEnCour && prev_VacAnalogvalue < minVacuumForCoulee)
-        {
-          couleeEnCour = true;
-          #if (DEVICE_CONF == 0) // Événement pour les pompes P1,P2 et P3 seulement
-            pushToPublishQueue(evDebutDeCoulee, couleeEnCour, changeTime);
-          #endif
-        }
       } else 
       {
         // 
@@ -712,7 +714,9 @@ void PublishAll(){
         // Un cycle se termine (T2) et un autre commence (T0)
         // 
         pumpEvent = evPompe_T2;
+        #if (DEVICE_CONF == 0) // Événement pour les pompes P1,P2 et P3 seulement
         Old_T2 = T2;
+        #endif
         T2 = changeTime;
         // S'assurer qu'il n'y a pas eu d'overflow des compteurs avant de calculer le dutyCycle
         // et que le temps de marche de la pompe est acceptable
@@ -734,8 +738,10 @@ void PublishAll(){
           #endif
         } else 
         {
-          T1 = Old_T1;
-          T2 = Old_T2;
+          #if (DEVICE_CONF == 0) // Événement pour les pompes P1,P2 et P3 seulement
+            T1 = Old_T1;
+            T2 = Old_T2;
+          #endif
         }
       }
 
@@ -932,6 +938,7 @@ void readSelectedSensors(int sensorNo) {
     float insideTempC, outsideTempC;
     int D3res = analogWriteResolution(heater);
     int D3maxFreq = analogWriteMaxFrequency(heater);
+    unsigned long now = millis();
     Log.info("(initDS18B20Sensors) - Resolution and Frequency for pin 'heater': %d bits, maxFreq: %d Hz", D3res, D3maxFreq);
 
     int j = 0;
@@ -987,6 +994,7 @@ void readSelectedSensors(int sensorNo) {
 #if DISTANCESENSOR == US100
 // Cette routine mesure la distance entre la surface de l'eau et le capteur ultason
   void ReadDistance_US100(){
+    unsigned long now = millis();
       distSensorName = "US100";
       unsigned int currentReading;
       Log.info("(ReadDistance_US100) - Distance meas routine: ReadDistance_US100");
@@ -1026,6 +1034,7 @@ void readSelectedSensors(int sensorNo) {
   // Cette routine lit la température sur le capteur US-100.
   // Note: La valeur 45 DOIT être soustraite pour obtenir la température réelle.
   void Readtemp_US100(){
+      unsigned long now = millis();
       int Temp45 = 0;
       Serial1.begin(9600);  // Le capteur US-100 fonctionne à 9600 baud
       Serial1.write(0X50);            // Demander la lecture de température sur le US-100 en envoyant 50 (Hex)
@@ -1065,7 +1074,7 @@ void ReadTherm_US100(){
         if((Therm45 > 0) && (Therm45 < 255))   // Vérifier si la valeur est acceptable
         {
             TempThermUS100 = (Therm45 - 45); // Conversion en température réelle
-            Log.info("(ReadTherm_US100) -Temp. thermistor: %dC now= %lu",  (byte)(Therm45 - 45), now); // Pour debug
+            Log.info("(ReadTherm_US100) -Temp. thermistor: %dC now= %lu",  (byte)(Therm45 - 45), millis()); // Pour debug
         }
     }
     Serial1.end();  // Le capteur US-100 fonctionne à 9600 baud
@@ -1075,6 +1084,7 @@ void ReadTherm_US100(){
 #if DISTANCESENSOR == MB7389
 // Cette routine mesure la distance entre la surface de l'eau et le capteur ultason
   void ReadDistance_MB7389(){
+      unsigned long now = millis();
       MB7389_pulse = pulseIn(MB7389_pin2, HIGH);
       long currentReading = MB7389_pulse;
       Log.info("(ReadDistance_MB7389) - Distance meas routine: ReadDistance_MB7389");
@@ -1137,6 +1147,7 @@ int AvgTempReading(int thisReading){
       float outsideTempC;
       int i;
       int maxTry = 3;
+      unsigned long now = millis();
       Particle.process();
       if (ds18b20Count > 0){
           if (ds18b20Count > 1){
