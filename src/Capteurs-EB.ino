@@ -33,19 +33,6 @@ Les paramètres définissent la configuration des devices et le code est compil�
 dépendamment de cette configuration.
 */
 
-/********* Choisir la configuration de device à compiler *********/
-#define DEVICE_CONF 2
-// Config pour:
-// P1, P2, P3 -> DEVICE_CONF == 0
-// V1, V2, V3 -> DEVICE_CONF == 1
-// PT1, PT2 -> DEVICE_CONF == 2
-// RS1, RS2, RS3, RS4, RF2 -> DEVICE_CONF == 3
-// RF1, RC1, RC2 -> DEVICE_CONF == 4
-// RS5, RS6 -> DEVICE_CONF == 5
-// RHC -> DEVICE_CONF == 6
-// VEcTk -> DEVICE_CONF == 7
-/*****************************************************************/
-
 #if (DEVICE_CONF == 0)
   String config = "0 -> P1, P2, P3";  // String info de configuration
   #define DISTANCESENSOR NONE         // Pour compilation conditionnelle du serial handler: US100. MB7389, None
