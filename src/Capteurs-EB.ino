@@ -18,10 +18,10 @@ STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.7.0"   // Version du firmware du capteur.
+#define FirmwareVersion "1.7.1"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
-String FirmwareDate = F_Date + " " + F_Time; //Date et heure de compilation UTC
+String FirmwareDate = F_Date + " " + F_Time; // Date et heure de compilation UTC
 
 #define NONE 0
 #define US100 1
@@ -47,16 +47,18 @@ dépendamment de cette configuration.
 /*****************************************************************/
 
 #if (DEVICE_CONF == 0)
-  String config = "0 -> P1, P2, P3";  //String info de configuration
-  #define DISTANCESENSOR NONE         //Pour compilation conditionnelle du serial handler: US100. MB7389, None
-  #define PUMPMOTORDETECT true        //Pour compilation conditionnelle de la routin e d'interruption
-  #define HASDS18B20SENSOR false      //Pour le code spécifique au captgeur de température DS18B20
-  #define HASHEATING false            //Pour le chauffage du boitier
-  #define HASVACUUMSENSOR true        //Un capteur de vide est installé
-  #define HASVALVES false             //Des valves sont relié à ce capteur
-  #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
-  #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
-  #define baseSampling  1             //basic sampling interval for main loop
+  String config = "0 -> P1, P2, P3";  // String info de configuration
+  #define DISTANCESENSOR NONE         // Pour compilation conditionnelle du serial handler: US100. MB7389, None
+  #define PUMPMOTORDETECT true        // Pour compilation conditionnelle de la routin e d'interruption
+  #define HASDS18B20SENSOR false      // Pour le code spécifique au captgeur de température DS18B20
+  #define HASHEATING false            // Pour le chauffage du boitier
+  #define HASVACUUMSENSOR true        // Un capteur de vide est installé
+  #define HASVALVES false             // Des valves sont relié à ce capteur
+  #define HASRELAYOUTPUT false        // Un relais SSR peut être relié à ce capteur
+  #define HASUS100THERMISTOR false    // Un thermistor est présent pour mesurer la température du boitier US100 robuste
+  #define baseSampling  1             // basic sampling interval for main loop
+  #define pumpMinRunTime 17 * second  // Ignore cycles where pump is running less than 17 seconds
+  #define pumpRunTimeLimit 2 * minute // Maximum pump run time before a warning is issued
   /*Config for P1, P2, P3 -> DEVICE_CONF == 0
   DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
   P1        None            true            false            false      true            false     false          false
@@ -65,16 +67,18 @@ dépendamment de cette configuration.
   */
 
 #elif (DEVICE_CONF == 1)
-  String config = "1 -> V1, V2, V3";  //String info de configuration
-  #define DISTANCESENSOR NONE         //Pour compilation conditionnelle du serial handler: US100. MB7389, None
-  #define PUMPMOTORDETECT true        //Pour compilation conditionnelle de la routin e d'interruption
-  #define HASDS18B20SENSOR true       //Pour le code spécifique au captgeur de température DS18B20
-  #define HASHEATING true             //Pour le chauffage du boitier
-  #define HASVACUUMSENSOR true        //Un capteur de vide est installé
-  #define HASVALVES false             //Des valves sont relié à ce capteur
-  #define HASRELAYOUTPUT true         //Un relais SSR peut être relié à ce capteur
-  #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
-  #define baseSampling  1             //basic sampling interval for main loop
+  String config = "1 -> V1, V2, V3";  // String info de configuration
+  #define DISTANCESENSOR NONE         // Pour compilation conditionnelle du serial handler: US100. MB7389, None
+  #define PUMPMOTORDETECT true        // Pour compilation conditionnelle de la routin e d'interruption
+  #define HASDS18B20SENSOR true       // Pour le code spécifique au captgeur de température DS18B20
+  #define HASHEATING true             // Pour le chauffage du boitier
+  #define HASVACUUMSENSOR true        // Un capteur de vide est installé
+  #define HASVALVES false             // Des valves sont relié à ce capteur
+  #define HASRELAYOUTPUT true         // Un relais SSR peut être relié à ce capteur
+  #define HASUS100THERMISTOR false    // Un thermistor est présent pour mesurer la température du boitier US100 robuste
+  #define baseSampling  1             // basic sampling interval for main loop
+  #define pumpMinRunTime 0 * second   // Ignore cycles where pump is running less than 17 seconds
+  #define pumpRunTimeLimit 30 * 24 * heure // Maximum pump run time before a warning is issued
   /*Config for V1, V2, V3 -> DEVICE_CONF == 1
   DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
   V1        None            true            true(1)          true       true            false     true           false
@@ -83,33 +87,35 @@ dépendamment de cette configuration.
   */
 
 #elif (DEVICE_CONF == 2)
-  String config = "2 -> PT1, PT2";    //String info de configuration
-  #define DISTANCESENSOR NONE         //Pour compilation conditionnelle du serial handler: US100. MB7389, None
-  #define PUMPMOTORDETECT true        //Pour compilation conditionnelle de la routin e d'interruption
-  #define HASDS18B20SENSOR true       //Pour le code spécifique au captgeur de température DS18B20
-  #define HASHEATING false            //Pour le chauffage du boitier
-  #define HASVACUUMSENSOR false       //Un capteur de vide est installé
-  #define HASVALVES false             //Des valves sont relié à ce capteur
-  #define HASRELAYOUTPUT true         //Un relais SSR peut être relié à ce capteur
-  #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
-  #define baseSampling  1             //basic sampling interval for main loop
-  /*Config for PT1, PT2 -> DEVICE_CONF == 2
+  String config = "2 -> PT1, PT2";    // String info de configuration
+  #define DISTANCESENSOR NONE         // Pour compilation conditionnelle du serial handler: US100. MB7389, None
+  #define PUMPMOTORDETECT true        // Pour compilation conditionnelle de la routin e d'interruption
+  #define HASDS18B20SENSOR true       // Pour le code spécifique au captgeur de température DS18B20
+  #define HASHEATING false            // Pour le chauffage du boitier
+  #define HASVACUUMSENSOR false       // Un capteur de vide est installé
+  #define HASVALVES false             // Des valves sont relié à ce capteur
+  #define HASRELAYOUTPUT true         // Un relais SSR peut être relié à ce capteur
+  #define HASUS100THERMISTOR false    // Un thermistor est présent pour mesurer la température du boitier US100 robuste
+  #define baseSampling  1             // basic sampling interval for main loop
+  #define pumpMinRunTime 0 * second   // Ignore cycles where pump is running less than 17 seconds
+  #define pumpRunTimeLimit 3 * 24 * heure // Maximum pump run time before a warning is issued
+ /*Config for PT1, PT2 -> DEVICE_CONF == 2
   DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
   PT1       None            true            true(1)          false      false           false     true           false
   PT2       None            true            true(1)          false      false           false     true           false
   */
 
 #elif (DEVICE_CONF == 3)
-  String config = "3 -> RS1, RS2, RS3, RS4, RF2"; //String info de configuration
-  #define DISTANCESENSOR US100        //Pour compilation conditionnelle du serial handler: US100. MB7389, None
-  #define PUMPMOTORDETECT false       //Pour compilation conditionnelle de la routin e d'interruption
-  #define HASDS18B20SENSOR true       //Pour le code spécifique au captgeur de température DS18B20
-  #define HASHEATING true             //Pour le chauffage du boitier
-  #define HASVACUUMSENSOR false       //Un capteur de vide est installé
-  #define HASVALVES true              //Des valves sont relié à ce capteur
-  #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
-  #define HASUS100THERMISTOR true     //Un thermistor est présent pour mesurer la température du boitier US100 robuste
-  #define baseSampling  2             //basic sampling interval for main loop. Very slow to avoid echo
+  String config = "3 -> RS1, RS2, RS3, RS4, RF2"; // String info de configuration
+  #define DISTANCESENSOR US100        // Pour compilation conditionnelle du serial handler: US100. MB7389, None
+  #define PUMPMOTORDETECT false       // Pour compilation conditionnelle de la routin e d'interruption
+  #define HASDS18B20SENSOR true       // Pour le code spécifique au captgeur de température DS18B20
+  #define HASHEATING true             // Pour le chauffage du boitier
+  #define HASVACUUMSENSOR false       // Un capteur de vide est installé
+  #define HASVALVES true              // Des valves sont relié à ce capteur
+  #define HASRELAYOUTPUT false        // Un relais SSR peut être relié à ce capteur
+  #define HASUS100THERMISTOR true     // Un thermistor est présent pour mesurer la température du boitier US100 robuste
+  #define baseSampling  2             // basic sampling interval for main loop. Very slow to avoid echo
   /*Config for RS1, RS2, RS3, RS4, RF2 -> DEVICE_CONF == 3
   DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
   RS1       US100           false           true(2)          true       false           true      false          true
@@ -120,16 +126,16 @@ dépendamment de cette configuration.
   */
 
 #elif (DEVICE_CONF == 4)
-  String config = "4 -> RF1, RC1, RC2"; //String info de configuration
-  #define DISTANCESENSOR US100        //Pour compilation conditionnelle du serial handler: US100. MB7389, None
-  #define PUMPMOTORDETECT false       //Pour compilation conditionnelle de la routin e d'interruption
-  #define HASDS18B20SENSOR true       //Pour le code spécifique au captgeur de température DS18B20
-  #define HASHEATING true             //Pour le chauffage du boitier
-  #define HASVACUUMSENSOR false       //Un capteur de vide est installé
-  #define HASVALVES false             //Des valves sont relié à ce capteur
-  #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
-  #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
-  #define baseSampling  1             //basic sampling interval for main loop
+  String config = "4 -> RF1, RC1, RC2"; // String info de configuration
+  #define DISTANCESENSOR US100        // Pour compilation conditionnelle du serial handler: US100. MB7389, None
+  #define PUMPMOTORDETECT false       // Pour compilation conditionnelle de la routin e d'interruption
+  #define HASDS18B20SENSOR true       // Pour le code spécifique au captgeur de température DS18B20
+  #define HASHEATING true             // Pour le chauffage du boitier
+  #define HASVACUUMSENSOR false       // Un capteur de vide est installé
+  #define HASVALVES false             // Des valves sont relié à ce capteur
+  #define HASRELAYOUTPUT false        // Un relais SSR peut être relié à ce capteur
+  #define HASUS100THERMISTOR false    // Un thermistor est présent pour mesurer la température du boitier US100 robuste
+  #define baseSampling  1             // basic sampling interval for main loop
   /*Config for RF1, RC1, RC2 -> DEVICE_CONF == 4
   DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
   RF1       US100           false           true(1)          true       false           false     false          false
@@ -138,16 +144,16 @@ dépendamment de cette configuration.
   */
 
 #elif (DEVICE_CONF == 5)
-  String config = "5 -> RS5, RS6";    //String info de configuration
-  #define DISTANCESENSOR US100        //Pour compilation conditionnelle du serial handler: US100. MB7389, None
-  #define PUMPMOTORDETECT false       //Pour compilation conditionnelle de la routin e d'interruption
-  #define HASDS18B20SENSOR false      //Pour le code spécifique au captgeur de température DS18B20
-  #define HASHEATING false            //Pour le chauffage du boitier
-  #define HASVACUUMSENSOR false       //Un capteur de vide est installé
-  #define HASVALVES true              //Des valves sont relié à ce capteur
-  #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
-  #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
-  #define baseSampling  1             //basic sampling interval for main loop
+  String config = "5 -> RS5, RS6";    // String info de configuration
+  #define DISTANCESENSOR US100        // Pour compilation conditionnelle du serial handler: US100. MB7389, None
+  #define PUMPMOTORDETECT false       // Pour compilation conditionnelle de la routin e d'interruption
+  #define HASDS18B20SENSOR false      // Pour le code spécifique au captgeur de température DS18B20
+  #define HASHEATING false            // Pour le chauffage du boitier
+  #define HASVACUUMSENSOR false       // Un capteur de vide est installé
+  #define HASVALVES true              // Des valves sont relié à ce capteur
+  #define HASRELAYOUTPUT false        // Un relais SSR peut être relié à ce capteur
+  #define HASUS100THERMISTOR false    // Un thermistor est présent pour mesurer la température du boitier US100 robuste
+  #define baseSampling  1             // basic sampling interval for main loop
   /*Config for RS5, RS6 -> DEVICE_CONF == 5
   DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
   RS5       US100           false           false            false      false           true      false          false
@@ -155,48 +161,48 @@ dépendamment de cette configuration.
   */
 
 #elif (DEVICE_CONF == 6)
-  String config = "6 -> RHC";         //String info de configuration
-  #define DISTANCESENSOR MB7389       //Pour compilation conditionnelle du serial handler: US100. MB7389, None
-  #define PUMPMOTORDETECT false       //Pour compilation conditionnelle de la routin e d'interruption
-  #define HASDS18B20SENSOR true       //Pour le code spécifique au captgeur de température DS18B20
-  #define HASHEATING true             //Pour le chauffage du boitier
-  #define HASVACUUMSENSOR false       //Un capteur de vide est installé
-  #define HASVALVES false             //Des valves sont relié à ce capteur
-  #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
-  #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
-  #define baseSampling  2             //basic sampling interval for main loop. Very slow to avoid echo
+  String config = "6 -> RHC";         // String info de configuration
+  #define DISTANCESENSOR MB7389       // Pour compilation conditionnelle du serial handler: US100. MB7389, None
+  #define PUMPMOTORDETECT false       // Pour compilation conditionnelle de la routin e d'interruption
+  #define HASDS18B20SENSOR true       // Pour le code spécifique au captgeur de température DS18B20
+  #define HASHEATING true             // Pour le chauffage du boitier
+  #define HASVACUUMSENSOR false       // Un capteur de vide est installé
+  #define HASVALVES false             // Des valves sont relié à ce capteur
+  #define HASRELAYOUTPUT false        // Un relais SSR peut être relié à ce capteur
+  #define HASUS100THERMISTOR false    // Un thermistor est présent pour mesurer la température du boitier US100 robuste
+  #define baseSampling  2             // basic sampling interval for main loop. Very slow to avoid echo
   /*Config for RHC -> DEVICE_CONF == 6
   DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
   RHC       MB7389          false           true(1)          true       false           false     false          false
   */
 
 #elif (DEVICE_CONF == 7)
-  String config = "7 -> VEcTk";       //String info de configuration
-  #define DISTANCESENSOR NONE         //Pour compilation conditionnelle du serial handler: US100. MB7389, None
-  #define PUMPMOTORDETECT false       //Pour compilation conditionnelle de la routin e d'interruption
-  #define HASDS18B20SENSOR true       //Pour le code spécifique au captgeur de température DS18B20
-  #define HASHEATING true             //Pour le chauffage du boitier
-  #define HASVACUUMSENSOR false       //Un capteur de vide est installé
-  #define HASVALVES true              //Des valves sont relié à ce capteur
-  #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
-  #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
-  #define baseSampling  1             //basic sampling interval for main loop
+  String config = "7 -> VEcTk";       // String info de configuration
+  #define DISTANCESENSOR NONE         // Pour compilation conditionnelle du serial handler: US100. MB7389, None
+  #define PUMPMOTORDETECT false       // Pour compilation conditionnelle de la routin e d'interruption
+  #define HASDS18B20SENSOR true       // Pour le code spécifique au captgeur de température DS18B20
+  #define HASHEATING true             // Pour le chauffage du boitier
+  #define HASVACUUMSENSOR false       // Un capteur de vide est installé
+  #define HASVALVES true              // Des valves sont relié à ce capteur
+  #define HASRELAYOUTPUT false        // Un relais SSR peut être relié à ce capteur
+  #define HASUS100THERMISTOR false    // Un thermistor est présent pour mesurer la température du boitier US100 robuste
+  #define baseSampling  1             // basic sampling interval for main loop
   /*Config for VEcTk -> DEVICE_CONF == 7
   DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
   VEcTk     NONE            false           true(1)          true       false           true      false          false
   */
 
 #elif (DEVICE_CONF == 8)
-  String config = "8 -> Dummy";       //String info de configuration
-  #define DISTANCESENSOR NONE         //Pour compilation conditionnelle du serial handler: US100. MB7389, None
-  #define PUMPMOTORDETECT false       //Pour compilation conditionnelle de la routin e d'interruption
-  #define HASDS18B20SENSOR false      //Pour le code spécifique au captgeur de température DS18B20
-  #define HASHEATING false            //Pour le chauffage du boitier
-  #define HASVACUUMSENSOR false       //Un capteur de vide est installé
-  #define HASVALVES true              //Des valves sont relié à ce capteur
-  #define HASRELAYOUTPUT false        //Un relais SSR peut être relié à ce capteur
-  #define HASUS100THERMISTOR false    //Un thermistor est présent pour mesurer la température du boitier US100 robuste
-  #define baseSampling  1             //basic sampling interval for main loop
+  String config = "8 -> Dummy";       // String info de configuration
+  #define DISTANCESENSOR NONE         // Pour compilation conditionnelle du serial handler: US100. MB7389, None
+  #define PUMPMOTORDETECT false       // Pour compilation conditionnelle de la routin e d'interruption
+  #define HASDS18B20SENSOR false      // Pour le code spécifique au captgeur de température DS18B20
+  #define HASHEATING false            // Pour le chauffage du boitier
+  #define HASVACUUMSENSOR false       // Un capteur de vide est installé
+  #define HASVALVES true              // Des valves sont relié à ce capteur
+  #define HASRELAYOUTPUT false        // Un relais SSR peut être relié à ce capteur
+  #define HASUS100THERMISTOR false    // Un thermistor est présent pour mesurer la température du boitier US100 robuste
+  #define baseSampling  1             // basic sampling interval for main loop
   /*Config for DummyDevice -> DEVICE_CONF == 8
   DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
   Dummy     NONE            false           false            false      false           true      false          false
@@ -234,19 +240,19 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define minVacuumForCoulee -5.0   // Minimum value a vacuum required to consider a pump operation as beginning a coulee
 #define maxRangeUS100 3000        // Distance maximale valide pour le captgeur
 #define maxRangeMB7389 1900       // Distance maximale valide pour le captgeur
-#define ONE_WIRE_BUS D4           //senseur sur D4
+#define ONE_WIRE_BUS D4           // senseur sur D4
 #define DallasSensorResolution 10 // Résolution de lecture de température
 #define MaxHeatingPowerPercent 80 // Puissance maximale appliqué sur la résistance de chauffage
 #define HeatingSetPoint 25        // Température cible à l'intérieur du boitier
 #define DefaultPubDelay 5         // Interval de publication en minutes par défaut
 #define TimeoutDelay 6 * slowSampling // Device watch dog timer time limit
-#define pumpRunTimeLimit 2 * minute // Maximum pump run time before a warning is issued
-#define pumpMinRunTime 17 * second // Ignore cycles where pump is running less than 17 seconds
+// #define pumpRunTimeLimit 2 * minute // Maximum pump run time before a warning is issued
+// #define pumpMinRunTime 17 * second // Ignore cycles where pump is running less than 17 seconds
 #define delaisFinDeCoulee 3 * heure // Temps sans activité de la pompe pour décréter la fin de la couléé
 #define pumpONstate 0             // Pump signal is active low.
 #define pumpOFFstate 1            // Pump signal is active low.
-#define StartDSTtime 1552197600   //dim 10 mar 2019, 02 h 00 = 1552197600 local time
-#define EndDSTtime 1572850800     //dim 4 nov 2019, 02 h 00 = 1572850800 local time
+#define StartDSTtime 1552197600   // dim 10 mar 2019, 02 h 00 = 1552197600 local time
+#define EndDSTtime 1572850800     // dim 4 nov 2019, 02 h 00 = 1572850800 local time
 #define MB7389_pin2 RX            // MB7389 pulse pin (pin 2) connected to serial1 Rx
 
 // Definition for vacuum transducer
@@ -346,9 +352,9 @@ int led = D7;                     // Feedback led
 int ssrRelay = D6;                // Solid state relay
 int RelayState = false;
 int motorState = A1;              // input pour Pompe marche/arrêt
-int heater = D3;                  //Contrôle le transistor du chauffage
+int heater = D3;                  // Contrôle le transistor du chauffage
 #if HASVACUUMSENSOR
-  int VacuumSensor = A0;          //Analogue input pour la mesure du vide
+  int VacuumSensor = A0;          // Analogue input pour la mesure du vide
   float VacCalibration = 0;       // Variable contenant la valeur de calibration du capteur.
   double VacAnalogvalue = 0;      // Mesure du vide
   double prev_VacAnalogvalue = 0; // Mesure précédente du vide
@@ -417,7 +423,7 @@ unsigned long lastRunWarning = millis();
 // Variables liés aux publications
 char publishString[buffSize];
 retained time_t newGenTimestamp = 0;
-retained uint32_t noSerie = 0; //Mettre en Backup RAM
+retained uint32_t noSerie = 0; // Mettre en Backup RAM
 int maxPublishInterval = DefaultPubDelay;
 volatile unsigned long maxPubDelay_ms = maxPublishInterval * minute;
 int pumpEvent = 0;
@@ -506,7 +512,7 @@ void setup() {
       #if HASHEATING
           pinMode(heater, OUTPUT);
           HeatingPower =  0; // Valeur de PWM de chauffage
-          analogWrite(heater, HeatingPower, 500); //Désactiver le chauffage
+          analogWrite(heater, HeatingPower, 500); // Désactiver le chauffage
       #endif
       digitalWrite(ssrRelay, LOW);
 
@@ -632,8 +638,8 @@ void setup() {
     #endif
 
     // PhotonWdgs::begin(true, true, TimeoutDelay, TIMER7);
-    lastPublish = millis(); //Initialise le temps initial de publication
-    changeTime = lastPublish; //Initialise le temps initial de changement de la pompe
+    lastPublish = millis(); // Initialise le temps initial de publication
+    changeTime = lastPublish; // Initialise le temps initial de changement de la pompe
 }
 
 /*******************************************************************************
@@ -645,7 +651,7 @@ void loop(){
   if (loopTime - timeLastUnit >= (baseSampling * second)){
     digitalWrite(led, LOW); // Pour indiqué le début de la prise de mesure
     // PhotonWdgs::tickle(); // Reset watchdog
-    readSelectedSensors(samplingIntervalCnt); //
+    readSelectedSensors(samplingIntervalCnt); // 
     PublishAll(); // Check if theres something on the publish queue
     /*delay(20UL);  // Just to have a visible flash on the LED*/
     digitalWrite(led, HIGH); // Pour indiqué la fin de la prise de mesure
@@ -682,9 +688,9 @@ void PublishAll(){
     // À faire lors d'un changement dans l'état de la pompe
     if (PumpCurrentState != PumpOldState)
     {
-      //
+      // 
       // À faire quand la pompe se met en marche (Pump ON)
-      //
+      // 
       if (PumpCurrentState == pumpONstate)
       {
         pumpEvent = evPompe_T1;
@@ -701,10 +707,10 @@ void PublishAll(){
         }
       } else 
       {
-        //
+        // 
         // À faire quand la pompe s'arrête (Pump OFF)
         // Un cycle se termine (T2) et un autre commence (T0)
-        //
+        // 
         pumpEvent = evPompe_T2;
         Old_T2 = T2;
         T2 = changeTime;
@@ -844,11 +850,11 @@ void PublishAll(){
   }
 }
 
-//*******************************************************************************
+// *******************************************************************************
 //  readSelectedSensors routine
 //  Read the sensors attached to the device
 //  If no sensor is present, the compiler substitute a delay of 20ms to get a visible flash on the activity led
-//*******************************************************************************
+// *******************************************************************************
 void readSelectedSensors(int sensorNo) {
   // Log.info("readSelectedSensors) - Now reading sensorNo: %d", sensorNo);
 
@@ -884,7 +890,7 @@ void readSelectedSensors(int sensorNo) {
     case 2:
     // Read US100 sensor temperature
       #if DISTANCESENSOR == US100
-        Readtemp_US100(); //
+        Readtemp_US100(); // 
         Particle.process();
       #else
         delay(20UL);  // Just to have a visible flash on the LED
@@ -947,7 +953,7 @@ void readSelectedSensors(int sensorNo) {
         printAddress(enclosureThermometer);
         ds18b20Sensors.setResolution(enclosureThermometer, DallasSensorResolution);
         Log.info("(initDS18B20Sensors) - Device 0 Resolution: %d", ds18b20Sensors.getResolution(enclosureThermometer));
-        ds18b20Sensors.requestTemperaturesByAddress(enclosureThermometer); //requête de lecture
+        ds18b20Sensors.requestTemperaturesByAddress(enclosureThermometer); // requête de lecture
         insideTempC = ds18b20Sensors.getTempC(enclosureThermometer);
         Log.info("(initDS18B20Sensors) - Test device 0 enclosureThermometer = %f", insideTempC);
 
@@ -958,7 +964,7 @@ void readSelectedSensors(int sensorNo) {
         printAddress(enclosureThermometer);
         ds18b20Sensors.setResolution(enclosureThermometer, DallasSensorResolution);
         Log.info("(initDS18B20Sensors) - Device 0 Resolution: %d", ds18b20Sensors.getResolution(enclosureThermometer));
-        ds18b20Sensors.requestTemperaturesByAddress(enclosureThermometer); //requête de lecture
+        ds18b20Sensors.requestTemperaturesByAddress(enclosureThermometer); // requête de lecture
         insideTempC = ds18b20Sensors.getTempC(enclosureThermometer);
         Log.info("(initDS18B20Sensors) - Test device 0 enclosureThermometer = %f", insideTempC);
 
@@ -966,7 +972,7 @@ void readSelectedSensors(int sensorNo) {
         printAddress(outsideThermometer);
         ds18b20Sensors.setResolution(outsideThermometer, DallasSensorResolution);
         Log.info("(initDS18B20Sensors) - Device 1 Resolution: %d", ds18b20Sensors.getResolution(outsideThermometer));
-        ds18b20Sensors.requestTemperaturesByAddress(outsideThermometer); //requête de lecture
+        ds18b20Sensors.requestTemperaturesByAddress(outsideThermometer); // requête de lecture
         outsideTempC = ds18b20Sensors.getTempC(outsideThermometer);
         Log.info("(initDS18B20Sensors) - Test device 1 outsideThermometer = %f", outsideTempC);
 
@@ -1001,7 +1007,7 @@ void readSelectedSensors(int sensorNo) {
                   lastPublish = now;                               // reset the max publish delay counter.
                   pushToPublishQueue(evDistance, (int)(dist_mm / numReadings), now);
                   prev_dist_mm = dist_mm;
-                  samplingInterval = fastSampling;   //Measurements NOT stable, increase the sampling frequency
+                  samplingInterval = fastSampling;   // Measurements NOT stable, increase the sampling frequency
               }
 
           } else {
@@ -1029,13 +1035,13 @@ void readSelectedSensors(int sensorNo) {
           Temp45 = Serial1.read();     // Lire la température brut
           if((Temp45 > 1) && (Temp45 < 130))   // Vérifier si la valeur est acceptable
           {
-              TempUS100 = AvgTempReading(Temp45 - 45); //Conversion en température réelle et filtrage
+              TempUS100 = AvgTempReading(Temp45 - 45); // Conversion en température réelle et filtrage
               Log.info("(Readtemp_US100) - Temp. US100: %dC now= %lu, lastPublish= %lu",  (int)(TempUS100/ numReadings), now, lastPublish); // Pour debug
               if (abs(TempUS100 - prev_TempUS100) > minTempChange){    // Vérifier s'il y a eu changement depuis la dernière publication
                       lastPublish = now;                     // Remise à zéro du compteur de délais de publication
-                      pushToPublishQueue(evUS100Temperature, (int)(TempUS100 / numReadings), now); //Publication
+                      pushToPublishQueue(evUS100Temperature, (int)(TempUS100 / numReadings), now); // Publication
                       prev_TempUS100 = TempUS100;
-                      varTempUS100 = (int)(TempUS100 / numReadings);  //
+                      varTempUS100 = (int)(TempUS100 / numReadings);  // 
                       samplingInterval = fastSampling;   // Augmenter la vitesse d'échantillonnage puisqu'il y a eu changement
                   }
           }
@@ -1081,7 +1087,7 @@ void ReadTherm_US100(){
               lastPublish = now;                               // reset the max publish delay counter.
               pushToPublishQueue(evDistance, (int)(dist_mm / numReadings), now);
               prev_dist_mm = dist_mm;
-              samplingInterval = fastSampling;   //Measurements NOT stable, increase the sampling frequency
+              samplingInterval = fastSampling;   // Measurements NOT stable, increase the sampling frequency
           }
 
       } else {
@@ -1103,11 +1109,11 @@ void ReadTherm_US100(){
 int AvgDistReading(int thisReading){
     long Avg = 0;
     for (int i = 1; i < numReadings; i++){
-        allDistReadings[i-1] = allDistReadings[i]; //Shift all readings
-       Avg += allDistReadings[i-1]; //Total of readings except the last one
+        allDistReadings[i-1] = allDistReadings[i]; // Shift all readings
+       Avg += allDistReadings[i-1]; // Total of readings except the last one
     }
-    allDistReadings[numReadings-1] = thisReading; //Current reading in the last position
-    Avg += thisReading; //including the last one
+    allDistReadings[numReadings-1] = thisReading; // Current reading in the last position
+    Avg += thisReading; // including the last one
     return (Avg); // Avg sera divisé par numReadings au moment de la publication
 }
 
@@ -1117,11 +1123,11 @@ int AvgDistReading(int thisReading){
 int AvgTempReading(int thisReading){
     long Avg = 0;
     for (int i = 1; i < numReadings; i++){
-        allTempReadings[i-1] = allTempReadings[i]; //Shift all readings
-        Avg += allTempReadings[i-1]; //Total of readings except the last one
+        allTempReadings[i-1] = allTempReadings[i]; // Shift all readings
+        Avg += allTempReadings[i-1]; // Total of readings except the last one
     }
-    allTempReadings[numReadings - 1] = thisReading; //Current reading in the last position
-    Avg += thisReading; //total including the last one
+    allTempReadings[numReadings - 1] = thisReading; // Current reading in the last position
+    Avg += thisReading; // total including the last one
     return (Avg); // Avg sera divisé par numReadings au moment de la publication
 }
 
@@ -1137,13 +1143,13 @@ int AvgTempReading(int thisReading){
               // Un capteur à l'intérieur du boitier et un à l'extérieur
               Log.info("(readDS18b20temp) - Lecture de 2 capteurs");
 
-              ds18b20Sensors.requestTemperaturesByIndex(0); //requête de lecture
+              ds18b20Sensors.requestTemperaturesByIndex(0); // requête de lecture
               for (i = 0; i < maxTry; i++){
                   insideTempC = ds18b20Sensors.getTempC(enclosureThermometer);
                   if (isValidDs18b20Reading(insideTempC)) break;
               }
               if (insideTempC > 30.0){
-                analogWrite(heater, HeatingPower, 500); //for enclosure safety
+                analogWrite(heater, HeatingPower, 500); // for enclosure safety
               }
               validEnclosureTemp = isValidDs18b20Reading(insideTempC);
               if (validEnclosureTemp){
@@ -1154,7 +1160,7 @@ int AvgTempReading(int thisReading){
                   insideTempC = 99;
               }
 
-              ds18b20Sensors.requestTemperaturesByIndex(1); //requête de lecture
+              ds18b20Sensors.requestTemperaturesByIndex(1); // requête de lecture
               for (i = 0; i < maxTry; i++){
                   outsideTempC = ds18b20Sensors.getTempC(outsideThermometer); // 5 tentatives de lecture au maximum
                   if (isValidDs18b20Reading (outsideTempC)) break;
@@ -1180,8 +1186,8 @@ int AvgTempReading(int thisReading){
            } else {
               // Un capteur à l'intérieur du boitier seulement
               Log.info("(readDS18b20temp) - lecture de 1 capteur");
-              /*ds18b20Sensors.requestTemperaturesByAddress(enclosureThermometer); //requête de lecture*/
-              ds18b20Sensors.requestTemperaturesByIndex(0); //requête de lecture
+              /*ds18b20Sensors.requestTemperaturesByAddress(enclosureThermometer); // requête de lecture*/
+              ds18b20Sensors.requestTemperaturesByIndex(0); // requête de lecture
               for (i = 0; i < 5; i++){
                   insideTempC = ds18b20Sensors.getTempC(enclosureThermometer);
                   if (isValidDs18b20Reading(insideTempC)){
@@ -1255,7 +1261,7 @@ Section réservé pour le code de mesure du vide (vacuum)
     }
   }
 
-  //Routine de calibration du capteur de vide
+  // Routine de calibration du capteur de vide
   double VacCalibre() {
     double calibrer = 33340 - (double) analogRead(VacuumSensor);
 
@@ -1371,7 +1377,7 @@ int remoteSet(String command){
     token = command.substring(0, sep);
     data = command.substring(sep + 1);
   } else {
-    return -1; //Fail
+    return -1; // Fail
   }
 
   if (token == "MaxPubDelay"){
@@ -1438,7 +1444,7 @@ bool writeEvent(struct Event thisEvent){
     savedEventCount++;
 
   } // Number of stored events in the buffer.
-   //pour debug
+   // pour debug
   // Log.info("(writeEvent) - W------> " + DomainName + DeptName + eventName[thisEvent.namePtr]);
   // Log.info("(writeEvent) - : writeEvent:: writePtr= %u, readPtr= %u, buffLen= %u, noSerie: %u, eData: %u, timer: %u",
   //                                    writePtr, readPtr, buffLen, thisEvent.noSerie, thisEvent.eData, thisEvent.timer);
@@ -1460,7 +1466,7 @@ struct Event readEvent(){
   } else {
       buffLen = writePtr - readPtr;
   }
-  //pour debug
+  // pour debug
   // Log.info("(readEvent) - <R------ " + DomainName + DeptName + eventName[thisEvent.namePtr]);
   // Log.info("(readEvent) - : readEvent:: writePtr= %u, readPtr= %u, buffLen= %u, noSerie: %u, eData: %u, timer: %u",
   //                                   writePtr, readPtr, buffLen, thisEvent.noSerie, thisEvent.eData, thisEvent.timer);
@@ -1476,7 +1482,7 @@ struct Event peekEvent(uint16_t peekReadPtr){
     return thisEvent; // événement vide
   }
   thisEvent = eventBuffer[peekReadPtr];
-   //pour debug
+   // pour debug
   // Log.info((peekEvent) -  " ------- " + eventName[thisEvent.namePtr]);
   // Log.info("(peekEvent) -  : peekEvent:: writePtr= %u, readPtr= %u, buffLen= %u, noSerie: %u, eData: %u, timer: %u",
   //                                   writePtr, peekReadPtr, buffLen, thisEvent.noSerie, thisEvent.eData, thisEvent.timer);
@@ -1494,7 +1500,7 @@ int replayEvent(String command){
     targetSerNo = command.substring(0, sep).toInt();
     targetGen = command.substring(sep + 1).toInt();
   } else {
-    return -1; //Fail
+    return -1; // Fail
   }
   Log.info("(replayEvent) - ??? Demande de replay Event SN: %lu, génération: %lu,  writePtr= %u, readPtr= %u, replayBuffLen= %u",
                   targetSerNo, targetGen, writePtr, readPtr, replayBuffLen);
@@ -1513,7 +1519,7 @@ int replayEvent(String command){
     }
     if ((noSerie - targetSerNo) > savedEventCount){ // Il y a 250 événement au maximum dans le buffer
         /*targetSerNo = noSerie - buffSize;*/
-        return savedEventCount; //
+        return savedEventCount; // 
     }
     // Calcul de la position de l'événement dans le buffer
     int tmpPtr = readPtr - (noSerie - targetSerNo);  // Position dans le buffer du premier événement à faire un playback
@@ -1530,7 +1536,7 @@ int replayEvent(String command){
     }
     Log.info("(replayEvent) - ??? Accepté pour replay Event no: %lu, ReplayPtr= %u, writePtr= %u, readPtr= %u, replayBuffLen= %u, No de série courant= %lu",
                     targetSerNo, replayPtr, writePtr, readPtr, replayBuffLen, noSerie);
-    return 0; //success
+    return 0; // success
   } else {
     return -1;
   }
@@ -1552,7 +1558,7 @@ struct Event replayReadEvent(){
       replayBuffLen = writePtr - replayPtr;
   }
 
-  //pour debug
+  // pour debug
   // Log.info("(replayReadEvent) - <------- " + DomainName + DeptName + eventName[thisEvent.namePtr]);
   // Log.info("(replayReadEvent) - : readEvent:: writePtr= %u, replayPtr= %u, replayBuffLen= %u, noSerie: %u, eData: %u, timer: %u",
   //                                   writePtr, replayPtr, replayBuffLen, thisEvent.noSerie, thisEvent.eData, thisEvent.timer);
@@ -1628,7 +1634,7 @@ bool replayQueuedEvents(){
         }
         publishSuccess = Particle.publish(DomainName + DeptName + eventName[thisEvent.namePtr],
                                             makeJSON(thisEvent.noSerie, thisEvent.timeStamp, thisEvent.timer, thisEvent.eData, DomainName + DeptName + eventName[thisEvent.namePtr], replayFlag), 60, PRIVATE);
-                                            //makeJSON(uint16_t numSerie, uint32_t timeStamp, uint32_t timer, int eData, String eName){
+                                            // makeJSON(uint16_t numSerie, uint32_t timeStamp, uint32_t timer, int eData, String eName){
         if (publishSuccess){
         replayReadEvent(); // Avance le pointeur de lecture
         }
