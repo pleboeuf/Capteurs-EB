@@ -34,7 +34,7 @@ dépendamment de cette configuration.
 */
 
 /********* Choisir la configuration de device à compiler *********/
-#define DEVICE_CONF 1
+#define DEVICE_CONF 2
 // Config pour:
 // P1, P2, P3 -> DEVICE_CONF == 0
 // V1, V2, V3 -> DEVICE_CONF == 1
@@ -476,15 +476,14 @@ void nameHandler(const char *topic, const char *data) {
 
 #if HASDS18B20SENSOR
 // function to print a device address
-  void printAddress(DeviceAddress deviceAddress)
-  {
-      for (uint8_t i = 0; i < 8; i++)
-      {
-        if (deviceAddress[i] < 16) Serial.print("0");
-        Serial.print(deviceAddress[i], HEX);
-        Serial.print(" ");
-      }
-      Serial.println();
+  void printAddress(DeviceAddress deviceAddress){
+    for (uint8_t i = 0; i < 8; i++)
+    {
+      if (deviceAddress[i] < 16) Serial.print("0");
+      Serial.print(deviceAddress[i], HEX);
+      Serial.print(" ");
+    }
+    Serial.println();
   }
 #endif
 
@@ -500,146 +499,146 @@ SerialLogHandler logHandler(115200, LOG_LEVEL_TRACE, {   // Logging level for no
     Setup Routine
 *******************************************************************************/
 void setup() {
-  // Initialisation des pin I/O
-      RGB.mirrorTo(RGBled_Red, RGBled_Green, RGBLed_Blue, true);
-      delay(3000UL); // Pour partir le moniteur série pour début
-      WiFi.disconnect();
+// Initialisation des pin I/O
+  RGB.mirrorTo(RGBled_Red, RGBled_Green, RGBLed_Blue, true);
+  delay(3000UL); // Pour partir le moniteur série pour début
+  WiFi.disconnect();
 
-      pinMode(led, OUTPUT);
-      pinMode(MB7389_pin2, INPUT);
-      digitalWrite(led, HIGH); // Mettre le led de status à OFF
-      pinMode(ssrRelay, OUTPUT);
-      #if HASHEATING
-          pinMode(heater, OUTPUT);
-          HeatingPower =  0; // Valeur de PWM de chauffage
-          analogWrite(heater, HeatingPower, 500); // Désactiver le chauffage
-      #endif
-      digitalWrite(ssrRelay, LOW);
+  pinMode(led, OUTPUT);
+  pinMode(MB7389_pin2, INPUT);
+  digitalWrite(led, HIGH); // Mettre le led de status à OFF
+  pinMode(ssrRelay, OUTPUT);
+  #if HASHEATING
+  pinMode(heater, OUTPUT);
+  HeatingPower =  0; // Valeur de PWM de chauffage
+  analogWrite(heater, HeatingPower, 500); // Désactiver le chauffage
+  #endif
+  digitalWrite(ssrRelay, LOW);
 
-      PumpCurrentState = digitalRead(A1);
-      for (int i=0; i <= 3; i++) {
-          pinMode(ValvePos_pin[i], INPUT_PULLUP);
-      }
+  PumpCurrentState = digitalRead(A1);
+  for (int i=0; i <= 3; i++) {
+      pinMode(ValvePos_pin[i], INPUT_PULLUP);
+  }
 
-      for (int i = 0; i < numReadings; i++){ // Init readings array
-          allDistReadings[i] = 0;
-          allTempReadings[i] = 0;
-      }
+  for (int i = 0; i < numReadings; i++){ // Init readings array
+      allDistReadings[i] = 0;
+      allTempReadings[i] = 0;
+  }
 
-      #if HASVACUUMSENSOR
-          VacCalibration = VacCalibre();
-      #endif
+#if HASVACUUMSENSOR
+  VacCalibration = VacCalibre();
+#endif
 
 // connect RX to Echo/Rx (US-100), TX to Trig/Tx (US-100)
-    Serial.begin(115200); // Pour débug
-    // #if DISTANCESENSOR == MB7389
-    //     Serial1.begin(9600);  // Le capteur US-100 fonctionne à 9600 baud
-    // #endif
+  Serial.begin(115200); // Pour débug
+  // #if DISTANCESENSOR == MB7389
+  //     Serial1.begin(9600);  // Le capteur US-100 fonctionne à 9600 baud
+  // #endif
 // Enregistrement des fonctions et variables disponible par le nuage
-    Log.info("(setup) Enregistrement des variables et fonctions\n");
-    Particle.variable("Version", FirmwareVersion);
-    Particle.variable("Date", FirmwareDate);
-    Particle.variable("config", config);
-    Particle.variable("hasDistance", distSensorName);
-    #if (DISTANCESENSOR == US100 || DISTANCESENSOR == MB7389)
-      Particle.variable("rawDistance", rawDistmm);
-    #endif
-    #if (DISTANCESENSOR == US100)
-      Particle.variable("TempUS100", varTempUS100);
-    #endif
-    Particle.variable("hasMotorIn", motorInput);
-    Particle.variable("hasDs18b20", ds18Sensor);
-    #if HASDS18B20SENSOR
-      Particle.variable("DS18B20Cnt", ds18b20Count);
-      Particle.variable("caseTemp", prev_EnclosureTemp);
-      Particle.variable("outdoorTemp",prev_TempExterne);
-    #endif
-    Particle.variable("hasHeating", hasHeatingRes);
-    Particle.variable("hasVacuum", hasVacSensor);
-    Particle.variable("hasValves", hasValveInput);
-    Particle.variable("hasRelayOut", hasRelayOutput);
-    Particle.variable("hasThermist", hasUs100Thermistor);
-    #if HASUS100THERMISTOR
-      Particle.variable("thermistor", TempThermUS100);
-    #endif
+  Log.info("(setup) Enregistrement des variables et fonctions\n");
+  Particle.variable("Version", FirmwareVersion);
+  Particle.variable("Date", FirmwareDate);
+  Particle.variable("config", config);
+  Particle.variable("hasDistance", distSensorName);
+#if (DISTANCESENSOR == US100 || DISTANCESENSOR == MB7389)
+  Particle.variable("rawDistance", rawDistmm);
+#endif
+#if (DISTANCESENSOR == US100)
+  Particle.variable("TempUS100", varTempUS100);
+#endif
+  Particle.variable("hasMotorIn", motorInput);
+  Particle.variable("hasDs18b20", ds18Sensor);
+#if HASDS18B20SENSOR
+  Particle.variable("DS18B20Cnt", ds18b20Count);
+  Particle.variable("caseTemp", prev_EnclosureTemp);
+  Particle.variable("outdoorTemp",prev_TempExterne);
+#endif
+  Particle.variable("hasHeating", hasHeatingRes);
+  Particle.variable("hasVacuum", hasVacSensor);
+  Particle.variable("hasValves", hasValveInput);
+  Particle.variable("hasRelayOut", hasRelayOutput);
+  Particle.variable("hasThermist", hasUs100Thermistor);
+#if HASUS100THERMISTOR
+  Particle.variable("thermistor", TempThermUS100);
+#endif
 
-    Particle.variable("relayState", RelayState);
-    Particle.variable("rssi", rssi);
-    Particle.variable("myIPaddress", myDeviceIP);
+  Particle.variable("relayState", RelayState);
+  Particle.variable("rssi", rssi);
+  Particle.variable("myIPaddress", myDeviceIP);
 // Fonctions disponible dans le nuage
-    Particle.function("relay", toggleRelay);
-    Particle.function("set", remoteSet);
-    Particle.function("reset", remoteReset);
-    Particle.function("replay", replayEvent);
+  Particle.function("relay", toggleRelay);
+  Particle.function("set", remoteSet);
+  Particle.function("reset", remoteReset);
+  Particle.function("replay", replayEvent);
 
-    #if DISTANCESENSOR == MB7389
-    //   Serial1.halfduplex(true); // Ce capteur envoie seulement des données sésie dans une seule direction
-                                // On peut utiliser la pin RX pour contrôler son fonctionnement
-                                // RX = LOW pour arrêter le capteur, RX = HIGH pour le démarrer
-      distSensorName = "MB7389";
-      Log.info(" $$$$$$$ Set distSensorName to MB7389");
-    #endif
+#if DISTANCESENSOR == MB7389
+  //   Serial1.halfduplex(true); // Ce capteur envoie seulement des données sésie dans une seule direction
+                              // On peut utiliser la pin RX pour contrôler son fonctionnement
+                              // RX = LOW pour arrêter le capteur, RX = HIGH pour le démarrer
+  distSensorName = "MB7389";
+  Log.info(" $$$$$$$ Set distSensorName to MB7389");
+#endif
 
-    Log.info("Configuration du wifi... ");
-    WiFi.setCredentials("BoilerHouse", "Station Shefford");
-    WiFi.setCredentials("PumpHouse", "Station Laporte");
-    Log.info("Connexion au wifi... ");
-    WiFi.connect();
+  Log.info("Configuration du wifi... ");
+  WiFi.setCredentials("BoilerHouse", "Station Shefford");
+  WiFi.setCredentials("PumpHouse", "Station Laporte");
+  Log.info("Connexion au wifi... ");
+  WiFi.connect();
 
 // Attendre la connection au nuage
-    Log.info("En attente...");
-    Particle.connect();
-    if (waitFor(Particle.connected, 10000)) {
-      delay(1000);
-      Serial.print(".");
+  Log.info("En attente...");
+  Particle.connect();
+  if (waitFor(Particle.connected, 10000)) {
+    delay(1000);
+    Serial.print(".");
+  }
+  if(Particle.connected()){
+    Log.info("Connecté au nuage. :)");
+    Particle.syncTime();
+    if (not(Time.isValid()) || Time.year() < 2019) {
+      Log.info("(setup) Syncing time ");
+      Particle.syncTime();
+      waitUntil(Particle.syncTimeDone);
+      Log.info("(setup) syncTimeDone " + Time.timeStr());
+      newGenTimestamp = Time.now();
     }
-    if(Particle.connected()){
-        Log.info("Connecté au nuage. :)");
-        Particle.syncTime();
-        if (not(Time.isValid()) || Time.year() < 2019) {
-            Log.info("(setup) Syncing time ");
-            Particle.syncTime();
-            waitUntil(Particle.syncTimeDone);
-            Log.info("(setup) syncTimeDone " + Time.timeStr());
-            newGenTimestamp = Time.now();
-        }
-        deviceIP = WiFi.localIP();
-         sprintf(myDeviceIP, "%d.%d.%d.%d", deviceIP[0], deviceIP[1], deviceIP[2], deviceIP[3]);
-    } else {
-        Log.info("Pas de connexion au nuage. :( ");
-    }
+    deviceIP = WiFi.localIP();
+    sprintf(myDeviceIP, "%d.%d.%d.%d", deviceIP[0], deviceIP[1], deviceIP[2], deviceIP[3]);
+  } else {
+    Log.info("Pas de connexion au nuage. :( ");
+  }
 
-    delay(1000UL);
-    if (savedEventCount == 0){ // If there's no accumulated event
-      remoteReset("serialNo"); // the non
-    }
+  delay(1000UL);
+  if (savedEventCount == 0){ // If there's no accumulated event
+    remoteReset("serialNo"); // the non
+  }
 
 // check that all buffer pointers are ok.
-    checkPtrState();
-    replayBuffLen = 0;
-    replayPtr = readPtr;
+  checkPtrState();
+  replayBuffLen = 0;
+  replayPtr = readPtr;
 
 // initialisation des capteurs de températures
-    #if HASDS18B20SENSOR
-        initDS18B20Sensors();
-    #endif
+#if HASDS18B20SENSOR
+  initDS18B20Sensors();
+#endif
 // show position of valves initially
-    #if HASVALVES
-      CheckValvePos(true);
-    #endif
+#if HASVALVES
+  CheckValvePos(true);
+#endif
 
-    Time.zone(-5);
-    Time.setFormat(TIME_FORMAT_ISO8601_FULL);
-    Particle.syncTime();
-    pushToPublishQueue(evBootTimestamp, 0,  millis());
-    #if (DEVICE_CONF == 0) // Événement pour les pompes 1 2 et 3 seulement
-      pushToPublishQueue(evPumpEndCycle, 1, millis());
-      pushToPublishQueue(evFinDeCoulee, false, millis());
-    #endif
+  Time.zone(-5);
+  Time.setFormat(TIME_FORMAT_ISO8601_FULL);
+  Particle.syncTime();
+  pushToPublishQueue(evBootTimestamp, 0,  millis());
+  #if (DEVICE_CONF == 0) // Événement pour les pompes 1 2 et 3 seulement
+  pushToPublishQueue(evPumpEndCycle, 1, millis());
+  pushToPublishQueue(evFinDeCoulee, false, millis());
+  #endif
 
-    // PhotonWdgs::begin(true, true, TimeoutDelay, TIMER7);
-    lastPublish = millis(); // Initialise le temps initial de publication
-    changeTime = lastPublish; // Initialise le temps initial de changement de la pompe
+  // PhotonWdgs::begin(true, true, TimeoutDelay, TIMER7);
+  lastPublish = millis(); // Initialise le temps initial de publication
+  changeTime = lastPublish; // Initialise le temps initial de changement de la pompe
 }
 
 /*******************************************************************************
@@ -685,97 +684,94 @@ void PublishAll(){
     simpleThermostat(HeatingSetPoint); // Control the enclosure heation
   #endif
 
-  #if PUMPMOTORDETECT
- 
-    // À faire lors d'un changement dans l'état de la pompe
-    if (PumpCurrentState != PumpOldState)
-    {
+  #if PUMPMOTORDETECT 
+  // À faire lors d'un changement dans l'état de la pompe
+  if (PumpCurrentState != PumpOldState)
+  {
+    // 
+    // À faire quand la pompe se met en marche (Pump ON)
+    // 
+    if (PumpCurrentState == pumpONstate){
+      pumpEvent = evPompe_T1;
+      #if (DEVICE_CONF == 0) // Événement pour les pompes P1,P2 et P3 seulement
+        // S'assurer qu'il n'y a pas eu d'overflow des compteurs
+        // Si il n'y a pas de coulée en cour et que la pompe à vide est en fonction -> débuté la coulée
+        if (!couleeEnCour && prev_VacAnalogvalue < minVacuumForCoulee)
+        {
+          couleeEnCour = true;
+            pushToPublishQueue(evDebutDeCoulee, couleeEnCour, changeTime);
+        }
+        Old_T1 = T1;
+      #endif
+      T1 = changeTime;
+    } else {
       // 
-      // À faire quand la pompe se met en marche (Pump ON)
+      // À faire quand la pompe s'arrête (Pump OFF)
+      // Un cycle se termine (T2) et un autre commence (T0)
       // 
-      if (PumpCurrentState == pumpONstate)
-      {
-        pumpEvent = evPompe_T1;
+      pumpEvent = evPompe_T2;
+      #if (DEVICE_CONF == 0) // Événement pour les pompes P1,P2 et P3 seulement
+      Old_T2 = T2;
+      #endif
+      T2 = changeTime;
+      // S'assurer qu'il n'y a pas eu d'overflow des compteurs avant de calculer le dutyCycle
+      // et que le temps de marche de la pompe est acceptable
+      if ((T2 > T1 && T1 > T0) && (T2 - T1 > pumpMinRunTime) && (T2 - T1 < pumpRunTimeLimit)) {
+        T_ON = (T2 - T1);     // Temps de marche de la pompe
+        T_OFF = (T1 - T0);
+        T_Cycle = (T2 - T0);  // Temps de cycle total.
+        // Calculer le dutyCycle si la pompe n'est pas resté en marche trop longtemps.
+        dutyCycle = (float)T_ON / (float)T_Cycle; // In case of overflow of T1 or T2, assume the dutycycle did not changed.
+        pushToPublishQueue(evPompe_T1_OFFtime, T_OFF, now);
+        pushToPublishQueue(evPompe_T2_ONtime, T_ON, now);
+        Log.info("(PublishAll) - T_OFF: %lu ms", T_OFF);
+        Log.info("(PublishAll) - T_ON: %lu ms", T_ON);
+        Log.info("(PublishAll) - dutyCycle: %f", dutyCycle);
+        Log.info("T0= %lu, T1= %lu, T2= %lu, dutyCycle : %.3f", T0, T1, T2, dutyCycle);
+        T0 = T2;
         #if (DEVICE_CONF == 0) // Événement pour les pompes P1,P2 et P3 seulement
-          // S'assurer qu'il n'y a pas eu d'overflow des compteurs
-          // Si il n'y a pas de coulée en cour et que la pompe à vide est en fonction -> débuté la coulée
-          if (!couleeEnCour && prev_VacAnalogvalue < minVacuumForCoulee)
-          {
-            couleeEnCour = true;
-              pushToPublishQueue(evDebutDeCoulee, couleeEnCour, changeTime);
-          }
-          Old_T1 = T1;
+          pushToPublishQueue(evPumpEndCycle, (int)(dutyCycle * 1000), changeTime);
         #endif
-        T1 = changeTime;
       } else 
       {
-        // 
-        // À faire quand la pompe s'arrête (Pump OFF)
-        // Un cycle se termine (T2) et un autre commence (T0)
-        // 
-        pumpEvent = evPompe_T2;
         #if (DEVICE_CONF == 0) // Événement pour les pompes P1,P2 et P3 seulement
-        Old_T2 = T2;
+          T1 = Old_T1;
+          T2 = Old_T2;
         #endif
-        T2 = changeTime;
-        // S'assurer qu'il n'y a pas eu d'overflow des compteurs avant de calculer le dutyCycle
-        // et que le temps de marche de la pompe est acceptable
-        if ((T2 > T1 && T1 > T0) && (T2 - T1 > pumpMinRunTime) && (T2 - T1 < pumpRunTimeLimit)) {
-          T_ON = (T2 - T1);     // Temps de marche de la pompe
-          T_OFF = (T1 - T0);
-          T_Cycle = (T2 - T0);  // Temps de cycle total.
-          // Calculer le dutyCycle si la pompe n'est pas resté en marche trop longtemps.
-          dutyCycle = (float)T_ON / (float)T_Cycle; // In case of overflow of T1 or T2, assume the dutycycle did not changed.
-          pushToPublishQueue(evPompe_T1_OFFtime, T_OFF, now);
-          pushToPublishQueue(evPompe_T2_ONtime, T_ON, now);
-          Log.info("(PublishAll) - T_OFF: %lu ms", T_OFF);
-          Log.info("(PublishAll) - T_ON: %lu ms", T_ON);
-          Log.info("(PublishAll) - dutyCycle: %f", dutyCycle);
-          Log.info("T0= %lu, T1= %lu, T2= %lu, dutyCycle : %.3f", T0, T1, T2, dutyCycle);
-          T0 = T2;
-          #if (DEVICE_CONF == 0) // Événement pour les pompes P1,P2 et P3 seulement
-            pushToPublishQueue(evPumpEndCycle, (int)(dutyCycle * 1000), changeTime);
-          #endif
-        } else 
-        {
-          #if (DEVICE_CONF == 0) // Événement pour les pompes P1,P2 et P3 seulement
-            T1 = Old_T1;
-            T2 = Old_T2;
-          #endif
+      }
+    }
+
+    pushToPublishQueue(pumpEvent, PumpCurrentState, changeTime);
+    // pushToPublishQueue(evPumpCurrentState, PumpCurrentState, changeTime);
+    PumpOldState = PumpCurrentState;
+  }  
+
+  // Si la coulée est en cour ET la pompe est arrêté depuis plus longtemps que le délais établit (3h)
+  // alors marque la coulée comme arrêté et émettre un événement de fin de coulée.
+  #if (DEVICE_CONF == 0) // Événement pour les pompes P1,P2 et P3 seulement
+    // Occasionnellement T2 est plus grand que now parse que la valeur de T2 est changé par une interruption 
+    if (now  > T2) {
+      bool delaisExpire = ((now - T2) > delaisFinDeCoulee);
+      if (couleeEnCour && (PumpCurrentState == pumpOFFstate) && delaisExpire){
+        Log.printf("Condition en fin de coulée - couleeEnCour: %s, pumpState: %s, now: %lu, T2: %lu, delaisExpire: %s\n", 
+                  couleeEnCour ? "true" : "false", PumpCurrentState ? "true" : "false", now, T2, delaisExpire ? "true" : "false");
+        couleeEnCour = false;
+        pushToPublishQueue(evFinDeCoulee, couleeEnCour, now);
+      }
+    }
+
+  // Publier un avertissement si la pompe fonctionne depuis trop longtemps
+    if (PumpCurrentState == pumpONstate && ((now - lastRunWarning) > 1 * minute)){
+      if (now > T1){
+        unsigned long pumpRunTime = now - T1;
+        if (pumpRunTime > pumpRunTimeLimit){
+          // Publish an event with the number of seconds the pump is running
+          pushToPublishQueue(evRunTooLong, (int)(pumpRunTime / 1000UL), now);
+          lastRunWarning = now;
         }
       }
-
-      pushToPublishQueue(pumpEvent, PumpCurrentState, changeTime);
-      // pushToPublishQueue(evPumpCurrentState, PumpCurrentState, changeTime);
-      PumpOldState = PumpCurrentState;
-    }  
-
-    // Si la coulée est en cour ET la pompe est arrêté depuis plus longtemps que le délais établit (3h)
-    // alors marque la coulée comme arrêté et émettre un événement de fin de coulée.
-    #if (DEVICE_CONF == 0) // Événement pour les pompes P1,P2 et P3 seulement
-      // Occasionnellement T2 est plus grand que now parse que la valeur de T2 est changé par une interruption 
-      if (now  > T2) {
-        bool delaisExpire = ((now - T2) > delaisFinDeCoulee);
-        if (couleeEnCour && (PumpCurrentState == pumpOFFstate) && delaisExpire){
-          Log.printf("Condition en fin de coulée - couleeEnCour: %s, pumpState: %s, now: %lu, T2: %lu, delaisExpire: %s\n", 
-                    couleeEnCour ? "true" : "false", PumpCurrentState ? "true" : "false", now, T2, delaisExpire ? "true" : "false");
-          couleeEnCour = false;
-          pushToPublishQueue(evFinDeCoulee, couleeEnCour, now);
-        }
-      }
-
-    // Publier un avertissement si la pompe fonctionne depuis trop longtemps
-      if (PumpCurrentState == pumpONstate && ((now - lastRunWarning) > 1 * minute)){
-        if (now > T1){
-          unsigned long pumpRunTime = now - T1;
-          if (pumpRunTime > pumpRunTimeLimit){
-            // Publish an event with the number of seconds the pump is running
-            pushToPublishQueue(evRunTooLong, (int)(pumpRunTime / 1000UL), now);
-            lastRunWarning = now;
-          }
-        }
-      }
-    #endif
+    }
+  #endif
 
   #endif
   // Publish all every maxPubDelay_ms
@@ -944,47 +940,47 @@ void readSelectedSensors(int sensorNo) {
     int j = 0;
     do
     {
-        ds18b20Sensors.begin();
-        delay(500);
-        ds18b20Count = ds18b20Sensors.getDeviceCount();
-        j++;
+      ds18b20Sensors.begin();
+      delay(500);
+      ds18b20Count = ds18b20Sensors.getDeviceCount();
+      j++;
     } while (ds18b20Count == 0 && j < 5);
 
     ds18b20Sensors.setWaitForConversion(true);
     Log.info("(initDS18B20Sensors) - DS18B20 found: %d after %d try.", ds18b20Count, j);
 
     if (ds18b20Count == 1){
-        Log.info("(initDS18B20Sensors) - Configuration de 1 ds18b20");
+      Log.info("(initDS18B20Sensors) - Configuration de 1 ds18b20");
 
-        ds18b20Sensors.getAddress(enclosureThermometer, 0);
-        printAddress(enclosureThermometer);
-        ds18b20Sensors.setResolution(enclosureThermometer, DallasSensorResolution);
-        Log.info("(initDS18B20Sensors) - Device 0 Resolution: %d", ds18b20Sensors.getResolution(enclosureThermometer));
-        ds18b20Sensors.requestTemperaturesByAddress(enclosureThermometer); // requête de lecture
-        insideTempC = ds18b20Sensors.getTempC(enclosureThermometer);
-        Log.info("(initDS18B20Sensors) - Test device 0 enclosureThermometer = %f", insideTempC);
+      ds18b20Sensors.getAddress(enclosureThermometer, 0);
+      printAddress(enclosureThermometer);
+      ds18b20Sensors.setResolution(enclosureThermometer, DallasSensorResolution);
+      Log.info("(initDS18B20Sensors) - Device 0 Resolution: %d", ds18b20Sensors.getResolution(enclosureThermometer));
+      ds18b20Sensors.requestTemperaturesByAddress(enclosureThermometer); // requête de lecture
+      insideTempC = ds18b20Sensors.getTempC(enclosureThermometer);
+      Log.info("(initDS18B20Sensors) - Test device 0 enclosureThermometer = %f", insideTempC);
 
     } else if (ds18b20Count == 2){
-        Log.info("(initDS18B20Sensors) - Configuration de 2 ds18b20");
+      Log.info("(initDS18B20Sensors) - Configuration de 2 ds18b20");
 
-        ds18b20Sensors.getAddress(enclosureThermometer, 0); // capteur Index 0
-        printAddress(enclosureThermometer);
-        ds18b20Sensors.setResolution(enclosureThermometer, DallasSensorResolution);
-        Log.info("(initDS18B20Sensors) - Device 0 Resolution: %d", ds18b20Sensors.getResolution(enclosureThermometer));
-        ds18b20Sensors.requestTemperaturesByAddress(enclosureThermometer); // requête de lecture
-        insideTempC = ds18b20Sensors.getTempC(enclosureThermometer);
-        Log.info("(initDS18B20Sensors) - Test device 0 enclosureThermometer = %f", insideTempC);
+      ds18b20Sensors.getAddress(enclosureThermometer, 0); // capteur Index 0
+      printAddress(enclosureThermometer);
+      ds18b20Sensors.setResolution(enclosureThermometer, DallasSensorResolution);
+      Log.info("(initDS18B20Sensors) - Device 0 Resolution: %d", ds18b20Sensors.getResolution(enclosureThermometer));
+      ds18b20Sensors.requestTemperaturesByAddress(enclosureThermometer); // requête de lecture
+      insideTempC = ds18b20Sensors.getTempC(enclosureThermometer);
+      Log.info("(initDS18B20Sensors) - Test device 0 enclosureThermometer = %f", insideTempC);
 
-        ds18b20Sensors.getAddress(outsideThermometer, 1); // capteur Index 1
-        printAddress(outsideThermometer);
-        ds18b20Sensors.setResolution(outsideThermometer, DallasSensorResolution);
-        Log.info("(initDS18B20Sensors) - Device 1 Resolution: %d", ds18b20Sensors.getResolution(outsideThermometer));
-        ds18b20Sensors.requestTemperaturesByAddress(outsideThermometer); // requête de lecture
-        outsideTempC = ds18b20Sensors.getTempC(outsideThermometer);
-        Log.info("(initDS18B20Sensors) - Test device 1 outsideThermometer = %f", outsideTempC);
+      ds18b20Sensors.getAddress(outsideThermometer, 1); // capteur Index 1
+      printAddress(outsideThermometer);
+      ds18b20Sensors.setResolution(outsideThermometer, DallasSensorResolution);
+      Log.info("(initDS18B20Sensors) - Device 1 Resolution: %d", ds18b20Sensors.getResolution(outsideThermometer));
+      ds18b20Sensors.requestTemperaturesByAddress(outsideThermometer); // requête de lecture
+      outsideTempC = ds18b20Sensors.getTempC(outsideThermometer);
+      Log.info("(initDS18B20Sensors) - Test device 1 outsideThermometer = %f", outsideTempC);
 
-        pushToPublishQueue(evEnclosureTemp, (int) insideTempC, now);
-        pushToPublishQueue(evAmbientTemp, (int) outsideTempC, now);
+      pushToPublishQueue(evEnclosureTemp, (int) insideTempC, now);
+      pushToPublishQueue(evAmbientTemp, (int) outsideTempC, now);
     }
     Log.info("(initDS18B20Sensors) - ");
     delay(2000UL);
