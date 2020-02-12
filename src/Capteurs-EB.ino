@@ -18,7 +18,7 @@ STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.7.1"   // Version du firmware du capteur.
+#define FirmwareVersion "1.7.2"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; // Date et heure de compilation UTC
@@ -57,7 +57,7 @@ dépendamment de cette configuration.
   #define HASRELAYOUTPUT false        // Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    // Un thermistor est présent pour mesurer la température du boitier US100 robuste
   #define baseSampling  1             // basic sampling interval for main loop
-  #define pumpMinRunTime 17 * second  // Ignore cycles where pump is running less than 17 seconds
+  #define pumpMinRunTime 15 * second  // Ignore cycles where pump is running less than 15 seconds
   #define pumpRunTimeLimit 2 * minute // Maximum pump run time before a warning is issued
   /*Config for P1, P2, P3 -> DEVICE_CONF == 0
   DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
