@@ -18,7 +18,7 @@ STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.7.2"   // Version du firmware du capteur.
+#define FirmwareVersion "1.7.3"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; // Date et heure de compilation UTC
@@ -34,7 +34,7 @@ dépendamment de cette configuration.
 */
 
 /********* Choisir la configuration de device à compiler *********/
-#define DEVICE_CONF 0
+#define DEVICE_CONF 1
 // Config pour:
 // P1, P2, P3 -> DEVICE_CONF == 0
 // V1, V2, V3 -> DEVICE_CONF == 1
@@ -53,6 +53,7 @@ dépendamment de cette configuration.
   #define HASDS18B20SENSOR false      // Pour le code spécifique au captgeur de température DS18B20
   #define HASHEATING false            // Pour le chauffage du boitier
   #define HASVACUUMSENSOR true        // Un capteur de vide est installé
+  #define minVacuumChange 0.1         // Changement de 0.1 Po Hg avant publication du niveau de vide
   #define HASVALVES false             // Des valves sont relié à ce capteur
   #define HASRELAYOUTPUT false        // Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    // Un thermistor est présent pour mesurer la température du boitier US100 robuste
@@ -73,6 +74,7 @@ dépendamment de cette configuration.
   #define HASDS18B20SENSOR true       // Pour le code spécifique au captgeur de température DS18B20
   #define HASHEATING true             // Pour le chauffage du boitier
   #define HASVACUUMSENSOR true        // Un capteur de vide est installé
+  #define minVacuumChange 0.25         // Changement de 0.5 Po Hg avant publication du niveau de vide. (Beaucoup de vibration aux pompes)
   #define HASVALVES false             // Des valves sont relié à ce capteur
   #define HASRELAYOUTPUT true         // Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    // Un thermistor est présent pour mesurer la température du boitier US100 robuste
@@ -236,7 +238,6 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define numReadings 10            // Number of readings to average for filtering
 #define minDistChange 2.0 * numReadings      // Minimum change in distance to publish an event (1/16")
 #define minTempChange 0.5 * numReadings      // Minimum temperature change to publish an event
-#define minVacuumChange 0.1       // Changement de 0.1 Po Hg avant publication du niveau de vide
 #define minVacuumForCoulee -5.0   // Minimum value a vacuum required to consider a pump operation as beginning a coulee
 #define maxRangeUS100 3000        // Distance maximale valide pour le captgeur
 #define maxRangeMB7389 1900       // Distance maximale valide pour le captgeur
@@ -488,7 +489,7 @@ void nameHandler(const char *topic, const char *data) {
 #endif
 
 // Declare the watchdog timer
-ApplicationWatchdog wd(TimeoutDelay, System.reset);
+// ApplicationWatchdog wd(TimeoutDelay, System.reset);
 
 /* Define a log handler on Serial1 for log messages */
 SerialLogHandler logHandler(115200, LOG_LEVEL_TRACE, {   // Logging level for non-application messages
