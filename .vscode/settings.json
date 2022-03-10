@@ -8,6 +8,6 @@
         "random": "cpp"
     },
     "C_Cpp.errorSquiggles": "Enabled",
-    "particle.firmwareVersion": "1.5.2",
-    "particle.targetDevice": "EB-V1"
+    "particle.firmwareVersion": "3.2.0",
+    "particle.targetDevice": "PL-ph-D"
 }

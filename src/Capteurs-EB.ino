@@ -13,7 +13,7 @@
 #include "spark-dallas-temperature.h"
 #include "math.h"
 
-STARTUP(WiFi.selectAntenna(ANT_AUTO));
+STARTUP(WiFi.selectAntenna(ANT_INTERNAL));
 STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 SYSTEM_THREAD(ENABLED);
 
@@ -331,7 +331,7 @@ struct Event{
 };
 
 // Variable relié à l'opération du buffer circulaire
-const int buffSize = 151; // Nombre max d'événements que l'on peut sauvegarder
+const int buffSize = 90; // Nombre max d'événements que l'on peut sauvegarder
 retained struct Event eventBuffer[buffSize];
 retained unsigned int buffLen = 0;
 retained unsigned int writePtr = 0;
@@ -1419,7 +1419,7 @@ int remoteReset(String command) {
         newGenTimestamp = Time.now();
         noSerie = 0;
         savedEventCount = 0;
-        Log.info("(remoteReset) - Nouvelle génération de no de série maintenant: %lu", newGenTimestamp);
+        Log.info("(remoteReset) - Nouvelle génération de no de série maintenant: %llu", newGenTimestamp);
         pushToPublishQueue(evNewGenSN, -1, millis());
         return 0;
     } else {
@@ -1510,7 +1510,7 @@ int replayEvent(String command){
   } else {
     return -1; // Fail
   }
-  Log.info("(replayEvent) - ??? Demande de replay Event SN: %lu, génération: %lu,  writePtr= %u, readPtr= %u, replayBuffLen= %u",
+  Log.info("(replayEvent) - ??? Demande de replay Event SN: %lu, génération: %llu,  writePtr= %u, readPtr= %u, replayBuffLen= %u",
                   targetSerNo, targetGen, writePtr, readPtr, replayBuffLen);
   if (replayBuffLen > 0){
       return -2; // Replay en cour - Attendre
@@ -1519,7 +1519,7 @@ int replayEvent(String command){
   if (targetSerNo >= 0 && targetGen > 0){ // Le numéro recherché doit être plus grand que 0
     // Validation
     if (targetGen != newGenTimestamp){
-      Log.info("(replayEvent) - ??? Error -99: targetGen= %lu, targetSerNo= %lu", targetGen, targetSerNo);
+      Log.info("(replayEvent) - ??? Error -99: targetGen= %llu, targetSerNo= %lu", targetGen, targetSerNo);
       return -99; // "invalid generation id"
     }
     if (targetSerNo >= noSerie){ // et plus petit que le numéro de série courant
@@ -1583,7 +1583,7 @@ typedef struct Event{
 */
 // Formattage standard pour les données sous forme JSON
 String makeJSON(uint32_t numSerie, uint32_t timeStamp, uint32_t timer, int eData, String eName, bool replayFlag){
-    sprintf(publishString,"{\"noSerie\": %lu,\"generation\": %lu,\"timestamp\": %lu,\"timer\": %lu,\"eData\":%d,\"eName\": \"%s\",\"replay\":%d}",
+    sprintf(publishString,"{\"noSerie\": %lu,\"generation\": %llu,\"timestamp\": %lu,\"timer\": %lu,\"eData\":%d,\"eName\": \"%s\",\"replay\":%d}",
                               numSerie, newGenTimestamp, timeStamp, timer, eData, eName.c_str(), replayFlag);
     // Log.info ("(makeJSON) - makeJSON: %s",publishString);
     return publishString;
