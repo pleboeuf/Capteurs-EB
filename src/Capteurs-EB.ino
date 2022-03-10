@@ -18,7 +18,7 @@ STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.7.3"   // Version du firmware du capteur.
+#define FirmwareVersion "1.7.4"   // Version du firmware du capteur.
 String F_Date  = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; // Date et heure de compilation UTC
@@ -74,7 +74,7 @@ dépendamment de cette configuration.
   #define HASDS18B20SENSOR true       // Pour le code spécifique au captgeur de température DS18B20
   #define HASHEATING true             // Pour le chauffage du boitier
   #define HASVACUUMSENSOR true        // Un capteur de vide est installé
-  #define minVacuumChange 0.25         // Changement de 0.5 Po Hg avant publication du niveau de vide. (Beaucoup de vibration aux pompes)
+  #define minVacuumChange 0.5         // Changement de 0.5 Po Hg avant publication du niveau de vide. (Beaucoup de vibration aux pompes)
   #define HASVALVES false             // Des valves sont relié à ce capteur
   #define HASRELAYOUTPUT true         // Un relais SSR peut être relié à ce capteur
   #define HASUS100THERMISTOR false    // Un thermistor est présent pour mesurer la température du boitier US100 robuste
@@ -503,7 +503,7 @@ void setup() {
 // Initialisation des pin I/O
   RGB.mirrorTo(RGBled_Red, RGBled_Green, RGBLed_Blue, true);
   delay(3000UL); // Pour partir le moniteur série pour début
-  WiFi.disconnect();
+  // WiFi.disconnect();
 
   pinMode(led, OUTPUT);
   pinMode(MB7389_pin2, INPUT);
@@ -585,10 +585,11 @@ void setup() {
   WiFi.setCredentials("PumpHouse", "Station Laporte");
   Log.info("Connexion au wifi... ");
   WiFi.connect();
-
+ 
 // Attendre la connection au nuage
   Log.info("En attente...");
   Particle.connect();
+ 
   if (waitFor(Particle.connected, 10000)) {
     delay(1000);
     Serial.print(".");
