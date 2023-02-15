@@ -7,4 +7,5 @@
 *.cpp
 *rsa*
 target/
+.vscode/
 SelectDeviceToCompile.ino
