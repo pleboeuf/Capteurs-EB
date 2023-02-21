@@ -14,11 +14,11 @@
 #include "math.h"
 
 STARTUP(WiFi.selectAntenna(ANT_INTERNAL));
-STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
+// STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.7.4" // Version du firmware du capteur.
+#define FirmwareVersion "1.7.5" // Version du firmware du capteur.
 String F_Date = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; // Date et heure de compilation UTC
@@ -110,7 +110,7 @@ String config = "2 -> PT1, PT2"; // String info de configuration
 #elif (DEVICE_CONF == 3)
 String config = "3 -> RS1, RS2, RS3, RS4, RF2"; // String info de configuration
 #define DISTANCESENSOR US100    // Pour compilation conditionnelle du serial handler: US100. MB7389, None
-#define PUMPMOTORDETECT false   // Pour compilation conditionnelle de la routin e d'interruption
+#define PUMPMOTORDETECT false   // Pour compilation conditionnelle de la routine d'interruption
 #define HASDS18B20SENSOR true   // Pour le code spécifique au captgeur de température DS18B20
 #define HASHEATING true         // Pour le chauffage du boitier
 #define HASVACUUMSENSOR false   // Un capteur de vide est installé
@@ -323,7 +323,7 @@ String eventName[] = {
 struct Event
 {
   uint32_t noSerie;   // Le numéro de série est généré automatiquement
-  time_t timeStamp;   // Timestamp du début d'une génération de noSerie.
+  int long timeStamp; // Timestamp du début d'une génération de noSerie.
   uint32_t timer;     // Temps depuis la mise en marche du capteur. Overflow après 49 jours.
   uint16_t namePtr;   // Pointeur dans l'array des nom d'événement. (Pour sauver de l'espace NVRAM)
   unsigned int eData; // Données pour cet événement. Entier 32 bits. Pour sauvegarder des données en point flottant
@@ -333,13 +333,20 @@ struct Event
 
 // Variable relié à l'opération du buffer circulaire
 const int buffSize = 90; // Nombre max d'événements que l'on peut sauvegarder
-retained struct Event eventBuffer[buffSize];
-retained unsigned int buffLen = 0;
-retained unsigned int writePtr = 0;
-retained unsigned int readPtr = 0;
-retained unsigned int replayPtr = 0;
+                         // retained struct Event eventBuffer[buffSize];
+                         // retained unsigned int buffLen = 0;
+                         // retained unsigned int writePtr = 0;
+                         // retained unsigned int readPtr = 0;
+                         // retained unsigned int replayPtr = 0;
+                         // unsigned int replayBuffLen = 0;
+                         // retained unsigned int savedEventCount = 0;
+struct Event eventBuffer[buffSize];
+unsigned int buffLen = 0;
+unsigned int writePtr = 0;
+unsigned int readPtr = 0;
+unsigned int replayPtr = 0;
 unsigned int replayBuffLen = 0;
-retained unsigned int savedEventCount = 0;
+unsigned int savedEventCount = 0;
 
 // Name space utilisé pour les événements
 // DomainName/DeptName/FunctionName/SubFunctionName/ValueName
@@ -424,7 +431,7 @@ unsigned long lastRunWarning = millis();
 
 // Variables liés aux publications
 char publishString[buffSize];
-retained time_t newGenTimestamp = 0;
+retained int long newGenTimestamp = 0;
 retained uint32_t noSerie = 0; // Mettre en Backup RAM
 int maxPublishInterval = DefaultPubDelay;
 volatile unsigned long maxPubDelay_ms = maxPublishInterval * minute;
@@ -498,10 +505,10 @@ void printAddress(DeviceAddress deviceAddress)
 // ApplicationWatchdog wd(TimeoutDelay, System.reset);
 
 /* Define a log handler on Serial1 for log messages */
-SerialLogHandler logHandler(115200, LOG_LEVEL_TRACE, {
-                                                         // Logging level for non-application messages
-                                                         {"app", LOG_LEVEL_INFO} // Logging level for application messages
-                                                     });
+SerialLogHandler logHandler(115200, LOG_LEVEL_NONE, {
+                                                        // Logging level for non-application messages
+                                                        {"app", LOG_LEVEL_INFO} // Logging level for application messages
+                                                    });
 
 /*******************************************************************************
     Setup Routine
@@ -600,7 +607,7 @@ void setup()
   Log.info("En attente...");
   Particle.connect();
 
-  if (waitFor(Particle.connected, 10000))
+  if (waitFor(Particle.connected, 30000))
   {
     delay(1000);
     Serial.print(".");
@@ -1345,7 +1352,7 @@ int simpleThermostat(double setPoint)
       HeatingPower = 0.25 * (32767 * MaxHeatingPowerPercent / 100UL); // Chauffage fixe au 1/4 de la puissance
     }
     analogWrite(heater, HeatingPower, 500);
-    Log.info("(simpleThermostat) - HeatingPower= %d, enclosureTemp= %0.1f, now= %lu", HeatingPower, prev_EnclosureTemp, millis());
+    // Log.info("(simpleThermostat) - HeatingPower= %d, enclosureTemp= %0.1f, now= %lu", HeatingPower, prev_EnclosureTemp, millis());
     // if (HeatingPower != prev_HeatingPower){
     //    pushToPublishQueue(evHeatingPowerLevel, HeatingPower, now);
     //    prev_HeatingPower = HeatingPower;
@@ -1559,7 +1566,7 @@ int remoteReset(String command)
       newGenTimestamp = Time.now();
       noSerie = 0;
       savedEventCount = 0;
-      Log.info("(remoteReset) - Nouvelle génération de no de série maintenant: %llu", newGenTimestamp);
+      Log.info("(remoteReset) - Nouvelle génération de no de série maintenant: %lu", newGenTimestamp);
       pushToPublishQueue(evNewGenSN, -1, millis());
       return 0;
     }
@@ -1660,7 +1667,7 @@ struct Event peekEvent(uint16_t peekReadPtr)
 // Format de la string de command: "Target SN, Target generation Id"
 int replayEvent(String command)
 {
-  time_t targetGen;
+  int long targetGen;
   uint32_t targetSerNo;
   int sep = command.indexOf(",");
   if (sep > 0)
@@ -1672,7 +1679,7 @@ int replayEvent(String command)
   {
     return -1; // Fail
   }
-  Log.info("(replayEvent) - ??? Demande de replay Event SN: %lu, génération: %llu,  writePtr= %u, readPtr= %u, replayBuffLen= %u",
+  Log.info("(replayEvent) - ??? Demande de replay Event SN: %lu, génération: %lu,  writePtr= %u, readPtr= %u, replayBuffLen= %u",
            targetSerNo, targetGen, writePtr, readPtr, replayBuffLen);
   if (replayBuffLen > 0)
   {
@@ -1684,7 +1691,7 @@ int replayEvent(String command)
     // Validation
     if (targetGen != newGenTimestamp)
     {
-      Log.info("(replayEvent) - ??? Error -99: targetGen= %llu, targetSerNo= %lu", targetGen, targetSerNo);
+      Log.info("(replayEvent) - ??? Error -99: targetGen= %lu, targetSerNo= %lu", targetGen, targetSerNo);
       return -99; // "invalid generation id"
     }
     if (targetSerNo >= noSerie)
@@ -1762,11 +1769,11 @@ typedef struct Event{
   int32_t eData;   // Données pour cet événement. Entier 16 bits. Pour sauvegarder des données en point flottant
 */
 // Formattage standard pour les données sous forme JSON
-String makeJSON(uint32_t numSerie, uint32_t timeStamp, uint32_t timer, int eData, String eName, bool replayFlag)
+String makeJSON(uint32_t numSerie, int long timeStamp, uint32_t timer, int eData, String eName, bool replayFlag)
 {
-  sprintf(publishString, "{\"noSerie\": %lu,\"generation\": %llu,\"timestamp\": %lu,\"timer\": %lu,\"eData\":%d,\"eName\": \"%s\",\"replay\":%d}",
+  sprintf(publishString, "{\"noSerie\": %lu,\"generation\": %lu,\"timestamp\": %lu,\"timer\": %lu,\"eData\":%d,\"eName\": \"%s\",\"replay\":%d}",
           numSerie, newGenTimestamp, timeStamp, timer, eData, eName.c_str(), replayFlag);
-  // Log.info ("(makeJSON) - makeJSON: %s",publishString);
+  Log.info("(makeJSON) - makeJSON: %s", publishString);
   return publishString;
 }
 
@@ -1787,7 +1794,7 @@ bool publishQueuedEvents()
   bool publishSuccess = false;
   struct Event thisEvent = {};
   bool replayFlag = false; // not a replay
-  // Log.info("(publishQueuedEvents) - < publishQueuedEvents:::");
+  Log.info("(publishQueuedEvents) - < publishQueuedEvents:::");
   thisEvent = peekEvent(readPtr);
   if (sizeof(thisEvent) == 0)
   {
@@ -1820,7 +1827,7 @@ bool replayQueuedEvents()
   bool publishSuccess = false;
   struct Event thisEvent = {};
   bool replayFlag = true; // This is a replay
-  Log.info("(replayQueuedEvents) - &&&& replayQueuedEvents:::");
+  // Log.info("(replayQueuedEvents) - &&&& replayQueuedEvents:::");
   thisEvent = peekEvent(replayPtr);
   if (sizeof(thisEvent) == 0)
   {

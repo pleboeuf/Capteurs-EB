@@ -7,6 +7,7 @@
         "random": "cpp"
     },
     "C_Cpp.errorSquiggles": "Enabled",
-    "particle.firmwareVersion": "3.3.1",
-    "particle.targetPlatform": "photon"
+    "particle.firmwareVersion": "1.4.4",
+    "particle.targetPlatform": "photon",
+    "particle.targetDevice": "PL-Ph-B"
 }
