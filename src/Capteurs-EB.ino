@@ -14,11 +14,11 @@
 #include "math.h"
 
 STARTUP(WiFi.selectAntenna(ANT_INTERNAL));
-// STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
+STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.7.5" // Version du firmware du capteur.
+#define FirmwareVersion "1.8.0" // Version du firmware du capteur.
 String F_Date = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; // Date et heure de compilation UTC
@@ -102,10 +102,10 @@ String config = "2 -> PT1, PT2"; // String info de configuration
 #define pumpMinRunTime 0 * second       // Ignore cycles where pump is running less than 17 seconds
 #define pumpRunTimeLimit 3 * 24 * heure // Maximum pump run time before a warning is issued
                                  /*Config for PT1, PT2 -> DEVICE_CONF == 2
-                                  DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
-                                  PT1       None            true            true(1)          false      false           false     true           false
-                                  PT2       None            true            true(1)          false      false           false     true           false
-                                  */
+                                 DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
+                                 PT1       None            true            true(1)          false      false           false     true           false
+                                 PT2       None            true            true(1)          false      false           false     true           false
+                                 */
 
 #elif (DEVICE_CONF == 3)
 String config = "3 -> RS1, RS2, RS3, RS4, RF2"; // String info de configuration
@@ -333,20 +333,20 @@ struct Event
 
 // Variable relié à l'opération du buffer circulaire
 const int buffSize = 90; // Nombre max d'événements que l'on peut sauvegarder
-                         // retained struct Event eventBuffer[buffSize];
-                         // retained unsigned int buffLen = 0;
-                         // retained unsigned int writePtr = 0;
-                         // retained unsigned int readPtr = 0;
-                         // retained unsigned int replayPtr = 0;
-                         // unsigned int replayBuffLen = 0;
-                         // retained unsigned int savedEventCount = 0;
-struct Event eventBuffer[buffSize];
-unsigned int buffLen = 0;
-unsigned int writePtr = 0;
-unsigned int readPtr = 0;
-unsigned int replayPtr = 0;
+retained struct Event eventBuffer[buffSize];
+retained unsigned int buffLen = 0;
+retained unsigned int writePtr = 0;
+retained unsigned int readPtr = 0;
+retained unsigned int replayPtr = 0;
 unsigned int replayBuffLen = 0;
-unsigned int savedEventCount = 0;
+retained unsigned int savedEventCount = 0;
+// struct Event eventBuffer[buffSize];
+// unsigned int buffLen = 0;
+// unsigned int writePtr = 0;
+// unsigned int readPtr = 0;
+// unsigned int replayPtr = 0;
+// unsigned int replayBuffLen = 0;
+// unsigned int savedEventCount = 0;
 
 // Name space utilisé pour les événements
 // DomainName/DeptName/FunctionName/SubFunctionName/ValueName
@@ -403,12 +403,11 @@ int allTempReadings[numReadings];
 #if HASDS18B20SENSOR
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature ds18b20Sensors(&oneWire);
-DeviceAddress enclosureThermometer, outsideThermometer;
+static DeviceAddress enclosureThermometer, outsideThermometer;
 int ds18b20Count = 0;
-bool validTempExterne = false;
-bool validEnclosureTemp = false;
-double prev_EnclosureTemp = 99;
-double prev_TempExterne = 99;
+
+static double prev_EnclosureTemp = 0;
+static double prev_TempExterne = 0;
 #endif
 
 int HeatingPower = 0;
@@ -422,7 +421,7 @@ int allDistReadings[numReadings];
 
 // Variables liés au temps
 unsigned long lastPublish = millis();
-unsigned long lastAllPublish = 0;
+static unsigned long lastAllPublish = 0;
 unsigned long lastRTCSync = millis();
 unsigned int samplingInterval = fastSampling;
 unsigned int samplingIntervalCnt = 4;
@@ -518,7 +517,6 @@ void setup()
   // Initialisation des pin I/O
   RGB.mirrorTo(RGBled_Red, RGBled_Green, RGBLed_Blue, true);
   delay(3000UL); // Pour partir le moniteur série pour début
-  // WiFi.disconnect();
 
   pinMode(led, OUTPUT);
   pinMode(MB7389_pin2, INPUT);
@@ -662,7 +660,9 @@ void setup()
 #endif
 
   // PhotonWdgs::begin(true, true, TimeoutDelay, TIMER7);
-  lastPublish = millis();   // Initialise le temps initial de publication
+  unsigned long now = millis();
+  lastAllPublish = now;
+  lastPublish = now;        // Initialise le temps initial de publication
   changeTime = lastPublish; // Initialise le temps initial de changement de la pompe
 }
 
@@ -819,6 +819,7 @@ void PublishAll()
   if (now - lastAllPublish > maxPubDelay_ms)
   {
 
+    Log.info("(PublishAll) now = %lu, lastAllPublish = %lu", now, lastAllPublish);
     Log.info("(PublishAll) - Time to publish: (now - lastAllPublish)= %lu maxPubDelay_ms= %lu", now - lastAllPublish, maxPubDelay_ms);
     lastAllPublish = now;
 
@@ -1006,7 +1007,7 @@ void initDS18B20Sensors()
   ds18b20Sensors.setWaitForConversion(true);
   Log.info("(initDS18B20Sensors) - DS18B20 found: %d after %d try.", ds18b20Count, j);
 
-  if (ds18b20Count == 1)
+  if (ds18b20Count > 0)
   {
     Log.info("(initDS18B20Sensors) - Configuration de 1 ds18b20");
 
@@ -1017,19 +1018,11 @@ void initDS18B20Sensors()
     ds18b20Sensors.requestTemperaturesByAddress(enclosureThermometer); // requête de lecture
     insideTempC = ds18b20Sensors.getTempC(enclosureThermometer);
     Log.info("(initDS18B20Sensors) - Test device 0 enclosureThermometer = %f", insideTempC);
+    pushToPublishQueue(evEnclosureTemp, (int)insideTempC, now);
   }
-  else if (ds18b20Count == 2)
+  if (ds18b20Count == 2)
   {
     Log.info("(initDS18B20Sensors) - Configuration de 2 ds18b20");
-
-    ds18b20Sensors.getAddress(enclosureThermometer, 0); // capteur Index 0
-    printAddress(enclosureThermometer);
-    ds18b20Sensors.setResolution(enclosureThermometer, DallasSensorResolution);
-    Log.info("(initDS18B20Sensors) - Device 0 Resolution: %d", ds18b20Sensors.getResolution(enclosureThermometer));
-    ds18b20Sensors.requestTemperaturesByAddress(enclosureThermometer); // requête de lecture
-    insideTempC = ds18b20Sensors.getTempC(enclosureThermometer);
-    Log.info("(initDS18B20Sensors) - Test device 0 enclosureThermometer = %f", insideTempC);
-
     ds18b20Sensors.getAddress(outsideThermometer, 1); // capteur Index 1
     printAddress(outsideThermometer);
     ds18b20Sensors.setResolution(outsideThermometer, DallasSensorResolution);
@@ -1038,10 +1031,8 @@ void initDS18B20Sensors()
     outsideTempC = ds18b20Sensors.getTempC(outsideThermometer);
     Log.info("(initDS18B20Sensors) - Test device 1 outsideThermometer = %f", outsideTempC);
 
-    pushToPublishQueue(evEnclosureTemp, (int)insideTempC, now);
     pushToPublishQueue(evAmbientTemp, (int)outsideTempC, now);
   }
-  Log.info("(initDS18B20Sensors) - ");
   delay(2000UL);
 }
 #endif
@@ -1067,7 +1058,7 @@ void ReadDistance_US100()
     if ((currentReading > 1) && (currentReading < maxRangeUS100))
     {                                           // normal distance should between 1mm and 2500 mm (1mm, 2,5m)
       dist_mm = AvgDistReading(currentReading); // Average the distance readings
-      Log.info("(ReadDistance_US100) - Dist.: %dmm, now= %lu, lastPublish= %lu, RSSI= %d", (int)(dist_mm / numReadings), now, lastPublish, rssi);
+      Log.info("(ReadDistance_US100) - Dist.: %dmm, lastPublish= %lu, RSSI= %d", (int)(dist_mm / numReadings), lastPublish, rssi);
       if (abs(dist_mm - prev_dist_mm) > minDistChange)
       {                    // Publish event in case of a change in temperature
         lastPublish = now; // reset the max publish delay counter.
@@ -1106,8 +1097,8 @@ void Readtemp_US100()
     Temp45 = Serial1.read();            // Lire la température brut
     if ((Temp45 > 1) && (Temp45 < 130)) // Vérifier si la valeur est acceptable
     {
-      TempUS100 = AvgTempReading(Temp45 - 45);                                                                                      // Conversion en température réelle et filtrage
-      Log.info("(Readtemp_US100) - Temp. US100: %dC now= %lu, lastPublish= %lu", (int)(TempUS100 / numReadings), now, lastPublish); // Pour debug
+      TempUS100 = AvgTempReading(Temp45 - 45);                                                                         // Conversion en température réelle et filtrage
+      Log.info("(Readtemp_US100) - Temp. US100: %dC , lastPublish= %lu", (int)(TempUS100 / numReadings), lastPublish); // Pour debug
       if (abs(TempUS100 - prev_TempUS100) > minTempChange)
       {                                                                              // Vérifier s'il y a eu changement depuis la dernière publication
         lastPublish = now;                                                           // Remise à zéro du compteur de délais de publication
@@ -1137,8 +1128,8 @@ void ReadTherm_US100()
     Therm45 = Serial1.read();             // Lire la température brut
     if ((Therm45 > 0) && (Therm45 < 255)) // Vérifier si la valeur est acceptable
     {
-      TempThermUS100 = (Therm45 - 45);                                                               // Conversion en température réelle
-      Log.info("(ReadTherm_US100) -Temp. thermistor: %dC now= %lu", (byte)(Therm45 - 45), millis()); // Pour debug
+      TempThermUS100 = (Therm45 - 45);                                             // Conversion en température réelle
+      Log.info("(ReadTherm_US100) - Temp. thermistor: %dC", (byte)(Therm45 - 45)); // Pour debug
     }
   }
   Serial1.end(); // Le capteur US-100 fonctionne à 9600 baud
@@ -1158,7 +1149,7 @@ void ReadDistance_MB7389()
   if ((currentReading > 1) && (currentReading < maxRangeMB7389))
   {                                           // normal distance should between 1mm and 2500 mm (1mm, 2,5m)
     dist_mm = AvgDistReading(currentReading); // Average the distance readings
-    Log.info("(ReadDistance_MB7389) - Dist.: %dmm, now= %lu, lastPublish= %lu, RSSI= %d", (int)(dist_mm / numReadings), now, lastPublish, rssi);
+    Log.info("(ReadDistance_MB7389) - Dist.: %dmm, lastPublish= %lu, RSSI= %d", (int)(dist_mm / numReadings), lastPublish, rssi);
     if (abs(dist_mm - prev_dist_mm) > minDistChange)
     {                    // Publish event in case of a change in temperature
       lastPublish = now; // reset the max publish delay counter.
@@ -1219,94 +1210,20 @@ double readDS18b20temp()
 {
   float insideTempC;
   float outsideTempC;
-  int i;
-  int maxTry = 3;
-  unsigned long now = millis();
-  Particle.process();
+  // Particle.process();
   if (ds18b20Count > 0)
   {
-    if (ds18b20Count > 1)
+    insideTempC = enclosureTemp(); // Un capteur à l'intérieur du boitier
+    if (ds18b20Count == 2)
     {
-      // Un capteur à l'intérieur du boitier et un à l'extérieur
-      Log.info("(readDS18b20temp) - Lecture de 2 capteurs");
-
-      ds18b20Sensors.requestTemperaturesByIndex(0); // requête de lecture
-      for (i = 0; i < maxTry; i++)
-      {
-        insideTempC = ds18b20Sensors.getTempC(enclosureThermometer);
-        if (isValidDs18b20Reading(insideTempC))
-          break;
-      }
-      if (insideTempC > 30.0)
-      {
-        analogWrite(heater, HeatingPower, 500); // for enclosure safety
-      }
-      validEnclosureTemp = isValidDs18b20Reading(insideTempC);
-      if (validEnclosureTemp)
-      {
-        prev_EnclosureTemp = insideTempC;
-        Log.info("(readDS18b20temp) - DS18b20 interne: %f, try= %d", insideTempC, i + 1);
-      }
-      else
-      {
-        Log.info("(readDS18b20temp) - DS18B20 interne: Erreur de lecture");
-        insideTempC = 99;
-      }
-
-      ds18b20Sensors.requestTemperaturesByIndex(1); // requête de lecture
-      for (i = 0; i < maxTry; i++)
-      {
-        outsideTempC = ds18b20Sensors.getTempC(outsideThermometer); // 5 tentatives de lecture au maximum
-        if (isValidDs18b20Reading(outsideTempC))
-          break;
-      }
-      validTempExterne = isValidDs18b20Reading(outsideTempC);
-      if (validTempExterne)
-      {
-        // Si la mesure est valide
-        if (abs(outsideTempC - prev_TempExterne) >= 1)
-        {
-          // Publier s'il y a eu du changement
-          pushToPublishQueue(evAmbientTemp, (int)outsideTempC, now);
-          prev_TempExterne = outsideTempC;
-        }
-        Log.info("(readDS18b20temp) - DS18b20 externe: %f, try= %d", outsideTempC, i + 1);
-      }
-      else
-      {
-        // Si la measure est invalide
-        Log.info("(readDS18b20temp) - DS18B20 externe: Erreur de lecture");
-        outsideTempC = 99;
-      }
-
-      delay(100UL);
+      delay(500UL);
+      outsideTempC = outsideTemp(); // Un capteur à l'extérieur
+      // delay(100UL);
       return (outsideTempC);
     }
     else
     {
-      // Un capteur à l'intérieur du boitier seulement
-      Log.info("(readDS18b20temp) - lecture de 1 capteur");
-      /*ds18b20Sensors.requestTemperaturesByAddress(enclosureThermometer); // requête de lecture*/
-      ds18b20Sensors.requestTemperaturesByIndex(0); // requête de lecture
-      for (i = 0; i < 5; i++)
-      {
-        insideTempC = ds18b20Sensors.getTempC(enclosureThermometer);
-        if (isValidDs18b20Reading(insideTempC))
-        {
-          break;
-        }
-      }
-      validEnclosureTemp = isValidDs18b20Reading(insideTempC);
-      if (validEnclosureTemp)
-      {
-        prev_EnclosureTemp = insideTempC;
-        Log.info("(readDS18b20temp) - DS18b20 interne: %f", insideTempC);
-      }
-      else
-      {
-        Log.info("(readDS18b20temp) - DS18B20 interne: Erreur de lecture");
-        insideTempC = 99;
-      }
+      insideTempC = enclosureTemp();
       return (insideTempC);
     }
   }
@@ -1321,8 +1238,65 @@ bool isValidDs18b20Reading(float reading)
   }
   else
   {
+    // Log.info("(isValidDs18b20Reading) - Invalid DS18B20: %f", reading);
     return (false);
   }
+}
+
+double enclosureTemp()
+{
+  float insideTempC;
+  int maxTry = 3;
+  bool validTemp = false;
+  int i;
+  // Un capteur à l'intérieur du boitier
+  ds18b20Sensors.requestTemperaturesByAddress(enclosureThermometer); // requête de lecture
+  for (i = 0; i < maxTry; i++)
+  {
+    insideTempC = ds18b20Sensors.getTempC(enclosureThermometer);
+    validTemp = isValidDs18b20Reading(insideTempC);
+    if (validTemp)
+    {
+      prev_EnclosureTemp = insideTempC;
+      Log.info("(readDS18b20temp) - DS18b20 interne: %f, try= %d", insideTempC, i + 1);
+      if (insideTempC > 30.0)
+        analogWrite(heater, HeatingPower, 500); // for enclosure safety
+      break;
+    }
+  }
+  if (!validTemp)
+  {
+    Log.info("(readDS18b20temp) - DS18B20 interne: Erreur de lecture");
+    insideTempC = 99;
+  }
+  return insideTempC;
+}
+
+double outsideTemp()
+{
+  float outsideTempC;
+  int maxTry = 3;
+  bool validTemp = false;
+  int i;
+  // Un capteur à l'extérieur
+  ds18b20Sensors.requestTemperaturesByAddress(outsideThermometer); // requête de lecture
+  for (i = 0; i < maxTry; i++)
+  {
+    outsideTempC = ds18b20Sensors.getTempC(outsideThermometer);
+    validTemp = isValidDs18b20Reading(outsideTempC);
+    if (validTemp)
+    {
+      prev_TempExterne = outsideTempC;
+      Log.info("(readDS18b20temp) - DS18b20 externe: %f, try= %d", outsideTempC, i + 1);
+      break;
+    }
+  }
+  if (!validTemp)
+  {
+    Log.info("(readDS18b20temp) - DS18B20 externe: Erreur de lecture");
+    outsideTempC = 99;
+  }
+  return outsideTempC;
 }
 #endif
 
@@ -1352,7 +1326,8 @@ int simpleThermostat(double setPoint)
       HeatingPower = 0.25 * (32767 * MaxHeatingPowerPercent / 100UL); // Chauffage fixe au 1/4 de la puissance
     }
     analogWrite(heater, HeatingPower, 500);
-    // Log.info("(simpleThermostat) - HeatingPower= %d, enclosureTemp= %0.1f, now= %lu", HeatingPower, prev_EnclosureTemp, millis());
+    Log.info("(simpleThermostat) - HeatingPower= %d, enclosureTemp= %0.1f", HeatingPower, prev_EnclosureTemp);
+
     // if (HeatingPower != prev_HeatingPower){
     //    pushToPublishQueue(evHeatingPowerLevel, HeatingPower, now);
     //    prev_HeatingPower = HeatingPower;
