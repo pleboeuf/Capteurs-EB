@@ -6,6 +6,7 @@
  *              sélectionner un "device" à programmer.
  * Author: Pierre Leboeuf
  * Date: Feb. 2016
+ * Rev:  Feb. 2023 -- Compile in deviceOS 1.4.4
  */
 
 // This #include statement was automatically added by the Particle IDE.
@@ -1206,28 +1207,17 @@ int AvgTempReading(int thisReading)
 }
 
 #if HASDS18B20SENSOR
-double readDS18b20temp()
+void readDS18b20temp()
 {
-  float insideTempC;
-  float outsideTempC;
-  // Particle.process();
   if (ds18b20Count > 0)
   {
-    insideTempC = enclosureTemp(); // Un capteur à l'intérieur du boitier
+    enclosureTemp(); // Un capteur à l'intérieur du boitier
     if (ds18b20Count == 2)
     {
-      delay(500UL);
-      outsideTempC = outsideTemp(); // Un capteur à l'extérieur
-      // delay(100UL);
-      return (outsideTempC);
-    }
-    else
-    {
-      insideTempC = enclosureTemp();
-      return (insideTempC);
+      delay(100UL);
+      outsideTemp(); // Un capteur à l'extérieur
     }
   }
-  return (-99);
 }
 
 bool isValidDs18b20Reading(float reading)
@@ -1258,7 +1248,7 @@ double enclosureTemp()
     if (validTemp)
     {
       prev_EnclosureTemp = insideTempC;
-      Log.info("(readDS18b20temp) - DS18b20 interne: %f, try= %d", insideTempC, i + 1);
+      Log.info("(enclosureTemp) - DS18b20 interne: %f, try= %d", insideTempC, i + 1);
       if (insideTempC > 30.0)
         analogWrite(heater, HeatingPower, 500); // for enclosure safety
       break;
@@ -1266,7 +1256,7 @@ double enclosureTemp()
   }
   if (!validTemp)
   {
-    Log.info("(readDS18b20temp) - DS18B20 interne: Erreur de lecture");
+    Log.info("(enclosureTemp) - DS18B20 interne: Erreur de lecture");
     insideTempC = 99;
   }
   return insideTempC;
@@ -1287,13 +1277,13 @@ double outsideTemp()
     if (validTemp)
     {
       prev_TempExterne = outsideTempC;
-      Log.info("(readDS18b20temp) - DS18b20 externe: %f, try= %d", outsideTempC, i + 1);
+      Log.info("(outsideTemp) - DS18b20 externe: %f, try= %d", outsideTempC, i + 1);
       break;
     }
   }
   if (!validTemp)
   {
-    Log.info("(readDS18b20temp) - DS18B20 externe: Erreur de lecture");
+    Log.info("(outsideTemp) - DS18B20 externe: Erreur de lecture");
     outsideTempC = 99;
   }
   return outsideTempC;
