@@ -434,8 +434,10 @@ unsigned long lastRTCSync = millis();
 unsigned int samplingInterval = fastSampling;
 int samplingIntervalCnt = 4;
 unsigned long lastRunWarning = millis();
+#if (DEVICE_CONF == 1)
 retained long OperationTime = 0;      // en secondes
 retained long TotalOperationTime = 0; // en secondes
+#endif
 struct runTime
 {
   unsigned int totalSec;
@@ -672,8 +674,10 @@ void setup()
 
   unsigned long now = millis();
   pushToPublishQueue(evBootTimestamp, 0, now);
+#if (DEVICE_CONF == 1)
   pushToPublishQueue(evVacPumpOperTimeSec, OperationTime, now);
   pushToPublishQueue(evNeedMaintenance, needMaintenance, now);
+#endif
 #if (DEVICE_CONF == 0) // Événement pour les pompes 1 2 et 3 seulement
   pushToPublishQueue(evPumpEndCycle, 1, millis());
   pushToPublishQueue(evFinDeCoulee, false, millis());
@@ -1541,6 +1545,7 @@ int remoteSet(String command)
     }
   }
 
+#if (DEVICE_CONF == 1)
   else if (token == "operationTimer")
   {
     OperationTime = data.toInt();
@@ -1548,6 +1553,7 @@ int remoteSet(String command)
     pushToPublishQueue(evNeedMaintenance, OperationTime > pumpRunTimeLimit, millis());
     return 0;
   }
+#endif
 
   else if (token == "MaxHeatingPower")
   {
@@ -1594,6 +1600,7 @@ int remoteReset(String command)
     System.enterSafeMode();
   }
 
+#if (DEVICE_CONF == 1)
   else if (command == "operationTimer")
   {
     OperationTime = 0;
@@ -1602,6 +1609,7 @@ int remoteReset(String command)
 
     return 0;
   }
+#endif
 
   else
   {
