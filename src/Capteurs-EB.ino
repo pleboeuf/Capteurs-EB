@@ -19,7 +19,7 @@ STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.8.0" // Version du firmware du capteur.
+#define FirmwareVersion "1.9.0" // Version du firmware du capteur.
 String F_Date = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; // Date et heure de compilation UTC
@@ -35,7 +35,7 @@ dépendamment de cette configuration.
 */
 
 /********* Choisir la configuration de device à compiler *********/
-#define DEVICE_CONF 3
+#define DEVICE_CONF 1
 // Config pour:
 // P1, P2, P3 -> DEVICE_CONF == 0
 // V1, V2, V3 -> DEVICE_CONF == 1
@@ -70,18 +70,18 @@ P3        None            true            false            false      true      
 
 #elif (DEVICE_CONF == 1)
 String config = "1 -> V1, V2, V3"; // String info de configuration
-#define DISTANCESENSOR NONE              // Pour compilation conditionnelle du serial handler: US100. MB7389, None
-#define PUMPMOTORDETECT true             // Pour compilation conditionnelle de la routin e d'interruption
-#define HASDS18B20SENSOR true            // Pour le code spécifique au captgeur de température DS18B20
-#define HASHEATING true                  // Pour le chauffage du boitier
-#define HASVACUUMSENSOR true             // Un capteur de vide est installé
-#define minVacuumChange 0.5              // Changement de 0.5 Po Hg avant publication du niveau de vide. (Beaucoup de vibration aux pompes)
-#define HASVALVES false                  // Des valves sont relié à ce capteur
-#define HASRELAYOUTPUT true              // Un relais SSR peut être relié à ce capteur
-#define HASUS100THERMISTOR false         // Un thermistor est présent pour mesurer la température du boitier US100 robuste
-#define baseSampling 1                   // basic sampling interval for main loop
-#define pumpMinRunTime 0 * second        // Ignore cycles where pump is running less than 17 seconds
-#define pumpRunTimeLimit 30 * 24 * heure // Maximum pump run time before a warning is issued
+#define DISTANCESENSOR NONE        // Pour compilation conditionnelle du serial handler: US100. MB7389, None
+#define PUMPMOTORDETECT true       // Pour compilation conditionnelle de la routin e d'interruption
+#define HASDS18B20SENSOR true      // Pour le code spécifique au captgeur de température DS18B20
+#define HASHEATING true            // Pour le chauffage du boitier
+#define HASVACUUMSENSOR true       // Un capteur de vide est installé
+#define minVacuumChange 0.5        // Changement de 0.5 Po Hg avant publication du niveau de vide. (Beaucoup de vibration aux pompes)
+#define HASVALVES false            // Des valves sont relié à ce capteur
+#define HASRELAYOUTPUT true        // Un relais SSR peut être relié à ce capteur
+#define HASUS100THERMISTOR false   // Un thermistor est présent pour mesurer la température du boitier US100 robuste
+#define baseSampling 1             // basic sampling interval for main loop
+#define pumpMinRunTime 0 * seconde // Ignore cycles where pump is running less than 17 seconds
+#define pumpRunTimeLimit 50 * 3600 // Maximum pump run time before a warning is issued
                                    /*Config for V1, V2, V3 -> DEVICE_CONF == 1
                                    DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
                                    V1        None            true            true(1)          true       true            false     true           false
@@ -228,10 +228,10 @@ bool hasRelayOutput = HASRELAYOUTPUT;
 bool hasUs100Thermistor = HASUS100THERMISTOR;
 
 // General definitions
-#define second 1000UL   // 1000 millisecond per sesond
+#define seconde 1000UL  // 1000 millisecond per sesond
 #define minute 60000UL  // 60000 millisecond per minute
 #define heure 3600000UL // 3600000 millisecond par heure
-#define unJourEnMillis (24 * 60 * 60 * second)
+#define unJourEnMillis (24 * 60 * 60 * seconde)
 #define valveDebounceDelay 50           // Debounce time in milliseconds for valve position readswitch
 #define pumpDebounceDelay 50            // Debounce time in milliseconds for pump mechanical start/stop switch
 #define fastSampling 6000UL             // in milliseconds
@@ -290,6 +290,8 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define evCurrentDutyCycle 22
 #define evPompe_T1_OFFtime 23
 #define evPompe_T2_ONtime 24
+#define evVacPumpOperTimeSec 25
+#define evNeedMaintenance 26
 
 // Table des nom d'événements
 String eventName[] = {
@@ -303,7 +305,7 @@ String eventName[] = {
     "pump/debutDeCoulee",       // Dummy event Place holder
     "pump/finDeCoulee",         // Dummy event Place holder
     "output/ssrRelayState",     // Output ssrRelay pin state. Active LOW
-    "sensor/vacuum",            // Vacuum rsensor eading
+    "sensor/vacuum",            // Vacuum sensor reading
     "sensor/flowmeterValue",    // Flowmeter reading. Not used
     "computed/flowmeterVolume", // Volume computed from flowmert readings. Not used
     "sensor/atmPressure",       // Atmospheric pressure
@@ -316,8 +318,10 @@ String eventName[] = {
     "sensor/Valve2Pos",         // Valve 2 position string
     "pump/state",               // Étant actuel de la pompe
     "pump/CurrentDutyCycle",    // Étant actuel du dutyCycle
-    "pump/T1_OFFtime",          // Durée de marche de la pompe en millisecondes
-    "pump/T2_ONtime"            // Durée de marche de la pompe en millisecondes
+    "pump/T1_OFFtime",          // Durée d'arrêt de la pompe en millisecondes
+    "pump/T2_ONtime",           // Durée de marche de la pompe en millisecondes
+    "pump/RunTimeSinceMaint",   // Durée de marche de la pompe entre les entretiens
+    "pump/NeedMaintenance"      // Entretient requis (true or false)
 };
 
 // Structure définissant un événement
@@ -386,6 +390,7 @@ volatile unsigned long T_ON = 0;            // Pump ON time
 volatile unsigned long T_OFF = 0;           // Pump OFF time
 unsigned long T_Cycle = 100000UL;           // Pump cycle time
 double dutyCycle = 0;                       // Duty cycle du dernier cycle de la pompe.
+bool needMaintenance = false;
 
 // Variables liés aux valves
 int ValvePos_pin[] = {A5, A4, A3, A2};
@@ -421,13 +426,25 @@ int rawDistmm = 0;
 int allDistReadings[numReadings];
 
 // Variables liés au temps
+int64_t samplingIntervalValue = 1 * seconde;
+int64_t lastLoop = 0;
 unsigned long lastPublish = millis();
 static unsigned long lastAllPublish = 0;
 unsigned long lastRTCSync = millis();
 unsigned int samplingInterval = fastSampling;
-unsigned int samplingIntervalCnt = 4;
-unsigned long timeLastUnit = 0;
+int samplingIntervalCnt = 4;
 unsigned long lastRunWarning = millis();
+#if (DEVICE_CONF == 1)
+retained long OperationTime = 0;      // en secondes
+retained long TotalOperationTime = 0; // en secondes
+#endif
+struct runTime
+{
+  unsigned int totalSec;
+  int hour;
+  int min;
+  int sec;
+};
 
 // Variables liés aux publications
 char publishString[buffSize];
@@ -654,14 +671,19 @@ void setup()
   Time.zone(-5);
   Time.setFormat(TIME_FORMAT_ISO8601_FULL);
   Particle.syncTime();
-  pushToPublishQueue(evBootTimestamp, 0, millis());
+
+  unsigned long now = millis();
+  pushToPublishQueue(evBootTimestamp, 0, now);
+#if (DEVICE_CONF == 1)
+  pushToPublishQueue(evVacPumpOperTimeSec, OperationTime, now);
+  pushToPublishQueue(evNeedMaintenance, needMaintenance, now);
+#endif
 #if (DEVICE_CONF == 0) // Événement pour les pompes 1 2 et 3 seulement
   pushToPublishQueue(evPumpEndCycle, 1, millis());
   pushToPublishQueue(evFinDeCoulee, false, millis());
 #endif
 
   // PhotonWdgs::begin(true, true, TimeoutDelay, TIMER7);
-  unsigned long now = millis();
   lastAllPublish = now;
   lastPublish = now;        // Initialise le temps initial de publication
   changeTime = lastPublish; // Initialise le temps initial de changement de la pompe
@@ -672,28 +694,31 @@ void setup()
 *******************************************************************************/
 void loop()
 {
-  unsigned long loopTime = millis();
   // Execute every nextSampleTime(6 seconds)) read all sensors and reset watchdog
-  if (loopTime - timeLastUnit >= (baseSampling * second))
+  if (millis() - lastLoop >= samplingIntervalValue)
   {
-    digitalWrite(led, LOW); // Pour indiqué le début de la prise de mesure
-    // PhotonWdgs::tickle(); // Reset watchdog
-    readSelectedSensors(samplingIntervalCnt); //
-    PublishAll();                             // Check if theres something on the publish queue
-    /*delay(20UL);  // Just to have a visible flash on the LED*/
-    digitalWrite(led, HIGH); // Pour indiqué la fin de la prise de mesure
-    timeLastUnit = loopTime;
-    /*Log.info("*** Loop No. %d end. Loop time is:<< %d >>", samplingIntervalCnt, millis() - loopTime);*/
-    if (samplingIntervalCnt == 5)
+    lastLoop = millis();
+#if (DEVICE_CONF == 1)
+    if (PumpCurrentState == pumpONstate)
     {
-      samplingIntervalCnt = 0;
+      OperationTime++;
+      TotalOperationTime++;
+      maxPublishInterval = 1; // publish time every minutes when pump is ON
     }
     else
     {
-      samplingIntervalCnt++;
+      maxPublishInterval = DefaultPubDelay;
     }
+    needMaintenance = OperationTime > pumpRunTimeLimit;
+#endif
+    digitalWrite(led, LOW);                   // Pour indiqué le début de la prise de mesure
+    readSelectedSensors(samplingIntervalCnt); //
+    PublishAll();                             // Check if theres something on the publish queue
+    delay(10UL);                              // Just to have a visible flash on the LED
+    digitalWrite(led, HIGH);                  // Pour indiqué la fin de la prise de mesure
+    ++samplingIntervalCnt %= 6;               // samplingIntervalCnt de 0 à 5
+    // Log.info("*** Loop No. %d end. Loop time is:<<  >>", samplingIntervalCnt);
   }
-  delay(200UL);
 }
 
 /*******************************************************************************
@@ -874,6 +899,10 @@ void PublishAll()
     // Publication de l'état de la pompe à interval
     pushToPublishQueue(evPumpCurrentState, PumpCurrentState, changeTime);
 #endif
+#if (DEVICE_CONF == 1)
+    pushToPublishQueue(evVacPumpOperTimeSec, OperationTime, now);
+    pushToPublishQueue(evNeedMaintenance, needMaintenance, now);
+#endif
   }
 
   // Synchronisation du temps avec Particle Cloud une fois par jour
@@ -978,11 +1007,10 @@ void readSelectedSensors(int sensorNo)
   case 5:
     rssi = WiFi.RSSI();
     delay(20UL); // Just to have a visible flash on the LED
-    break;
-
     // default:
     // Pour permettre la modification de maxPubDelay_ms par le nuage
     maxPubDelay_ms = maxPublishInterval * minute;
+    break;
   }
 }
 
@@ -1342,6 +1370,19 @@ void VacReadVacuumSensor()
     pushToPublishQueue(evVacuum, (int)(VacAnalogvalue * 100), lastPublish); // The measurements value is converted to integers for storage in the event buffer
     prev_VacAnalogvalue = VacAnalogvalue;                                   // The value will be divided by 10 for display to recover the decimal
   }
+#if DEVICE_CONF == 1
+  // Définir l'état de la POMPE À VIDE en fonction du vide mesuré au cas ou la détection du moteur ne fonctionne pas
+  if (VacAnalogvalue < -10 && PumpCurrentState == pumpOFFstate)
+  {
+    PumpCurrentState = pumpONstate;
+    changeTime = millis();
+  }
+  else if (digitalRead(A1) && VacAnalogvalue > -5 && PumpCurrentState == pumpONstate)
+  {
+    PumpCurrentState = pumpOFFstate;
+    changeTime = millis();
+  }
+#endif
 }
 
 // Routine de calibration du capteur de vide
@@ -1503,6 +1544,17 @@ int remoteSet(String command)
       return -1;
     }
   }
+
+#if (DEVICE_CONF == 1)
+  else if (token == "operationTimer")
+  {
+    OperationTime = data.toInt();
+    pushToPublishQueue(evVacPumpOperTimeSec, OperationTime, millis());
+    pushToPublishQueue(evNeedMaintenance, OperationTime > pumpRunTimeLimit, millis());
+    return 0;
+  }
+#endif
+
   else if (token == "MaxHeatingPower")
   {
     return -1;
@@ -1517,8 +1569,8 @@ int remoteReset(String command)
   if (command == "device")
   {
     System.reset();
-    // ou juste les numéros de série.
   }
+
   else if (command == "serialNo")
   {
     Particle.syncTime();
@@ -1542,10 +1594,23 @@ int remoteReset(String command)
     }
     // ou redémarre en safe mode (pour forcer une mise à jour)
   }
+
   else if (command == "safeMode")
   {
     System.enterSafeMode();
   }
+
+#if (DEVICE_CONF == 1)
+  else if (command == "operationTimer")
+  {
+    OperationTime = 0;
+    pushToPublishQueue(evVacPumpOperTimeSec, OperationTime, millis());
+    pushToPublishQueue(evNeedMaintenance, false, millis());
+
+    return 0;
+  }
+#endif
+
   else
   {
     return -1;
