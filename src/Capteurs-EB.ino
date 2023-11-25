@@ -35,7 +35,7 @@ dépendamment de cette configuration.
 */
 
 /********* Choisir la configuration de device à compiler *********/
-#define DEVICE_CONF 1
+#define DEVICE_CONF 3
 // Config pour:
 // P1, P2, P3 -> DEVICE_CONF == 0
 // V1, V2, V3 -> DEVICE_CONF == 1
@@ -47,7 +47,7 @@ dépendamment de cette configuration.
 // VEcTk -> DEVICE_CONF == 7
 /*****************************************************************/
 
-#if (DEVICE_CONF == 0)
+#if (DEVICE_CONF == 3)
 String config = "0 -> P1, P2, P3";  // String info de configuration
 #define DISTANCESENSOR NONE         // Pour compilation conditionnelle du serial handler: US100. MB7389, None
 #define PUMPMOTORDETECT true        // Pour compilation conditionnelle de la routin e d'interruption
@@ -59,7 +59,7 @@ String config = "0 -> P1, P2, P3";  // String info de configuration
 #define HASRELAYOUTPUT false        // Un relais SSR peut être relié à ce capteur
 #define HASUS100THERMISTOR false    // Un thermistor est présent pour mesurer la température du boitier US100 robuste
 #define baseSampling 1              // basic sampling interval for main loop
-#define pumpMinRunTime 15 * second  // Ignore cycles where pump is running less than 15 seconds
+#define pumpMinRunTime 15 * seconde // Ignore cycles where pump is running less than 15 seconds
 #define pumpRunTimeLimit 2 * minute // Maximum pump run time before a warning is issued
 /*Config for P1, P2, P3 -> DEVICE_CONF == 0
 DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
@@ -955,14 +955,14 @@ void readSelectedSensors(int sensorNo)
     ReadDistance_US100();
     Particle.process();
 #else
-    delay(20UL);                   // Just to have a visible flash on the LED
+    delay(20UL); // Just to have a visible flash on the LED
 #endif
 
 #if DISTANCESENSOR == MB7389
     ReadDistance_MB7389();
     Particle.process();
 #else
-    delay(20UL);                   // Just to have a visible flash on the LED
+    delay(20UL); // Just to have a visible flash on the LED
 #endif
     break;
 
@@ -972,7 +972,7 @@ void readSelectedSensors(int sensorNo)
     readDS18b20temp();
     Particle.process();
 #else
-    delay(20UL);                   // Just to have a visible flash on the LED
+    delay(20UL); // Just to have a visible flash on the LED
 #endif
     break;
 
@@ -982,7 +982,7 @@ void readSelectedSensors(int sensorNo)
     Readtemp_US100(); //
     Particle.process();
 #else
-    delay(20UL);                   // Just to have a visible flash on the LED
+    delay(20UL); // Just to have a visible flash on the LED
 #endif
     break;
 
@@ -1000,7 +1000,7 @@ void readSelectedSensors(int sensorNo)
     ReadTherm_US100();
     Particle.process();
 #else
-    delay(20UL);                   // Just to have a visible flash on the LED
+    delay(20UL); // Just to have a visible flash on the LED
 #endif
     break;
 
