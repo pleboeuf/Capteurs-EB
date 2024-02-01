@@ -19,7 +19,7 @@ STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.9.0" // Version du firmware du capteur.
+#define FirmwareVersion "1.10.0" // Version du firmware du capteur.
 String F_Date = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; // Date et heure de compilation UTC
@@ -35,7 +35,7 @@ dépendamment de cette configuration.
 */
 
 /********* Choisir la configuration de device à compiler *********/
-#define DEVICE_CONF 3
+#define DEVICE_CONF 7
 // Config pour:
 // P1, P2, P3 -> DEVICE_CONF == 0
 // V1, V2, V3 -> DEVICE_CONF == 1
@@ -47,10 +47,11 @@ dépendamment de cette configuration.
 // VEcTk -> DEVICE_CONF == 7
 /*****************************************************************/
 
-#if (DEVICE_CONF == 3)
+#if (DEVICE_CONF == 0)
 String config = "0 -> P1, P2, P3";  // String info de configuration
 #define DISTANCESENSOR NONE         // Pour compilation conditionnelle du serial handler: US100. MB7389, None
 #define PUMPMOTORDETECT true        // Pour compilation conditionnelle de la routin e d'interruption
+#define HASOPTOINPUT false          // Pour utiliser la connexion "Moteur Opto-In" pour déterminer l'état d'une valve
 #define HASDS18B20SENSOR false      // Pour le code spécifique au captgeur de température DS18B20
 #define HASHEATING false            // Pour le chauffage du boitier
 #define HASVACUUMSENSOR true        // Un capteur de vide est installé
@@ -72,6 +73,7 @@ P3        None            true            false            false      true      
 String config = "1 -> V1, V2, V3"; // String info de configuration
 #define DISTANCESENSOR NONE        // Pour compilation conditionnelle du serial handler: US100. MB7389, None
 #define PUMPMOTORDETECT true       // Pour compilation conditionnelle de la routin e d'interruption
+#define HASOPTOINPUT false         // Pour utiliser la connexion "Moteur Opto-In" pour déterminer l'état d'une valve
 #define HASDS18B20SENSOR true      // Pour le code spécifique au captgeur de température DS18B20
 #define HASHEATING true            // Pour le chauffage du boitier
 #define HASVACUUMSENSOR true       // Un capteur de vide est installé
@@ -93,6 +95,7 @@ String config = "1 -> V1, V2, V3"; // String info de configuration
 String config = "2 -> PT1, PT2"; // String info de configuration
 #define DISTANCESENSOR NONE             // Pour compilation conditionnelle du serial handler: US100. MB7389, None
 #define PUMPMOTORDETECT true            // Pour compilation conditionnelle de la routin e d'interruption
+#define HASOPTOINPUT false              // Pour utiliser la connexion "Moteur Opto-In" pour déterminer l'état d'une valve
 #define HASDS18B20SENSOR true           // Pour le code spécifique au captgeur de température DS18B20
 #define HASHEATING false                // Pour le chauffage du boitier
 #define HASVACUUMSENSOR false           // Un capteur de vide est installé
@@ -112,11 +115,12 @@ String config = "2 -> PT1, PT2"; // String info de configuration
 String config = "3 -> RS1, RS2, RS3, RS4, RF2"; // String info de configuration
 #define DISTANCESENSOR US100    // Pour compilation conditionnelle du serial handler: US100. MB7389, None
 #define PUMPMOTORDETECT false   // Pour compilation conditionnelle de la routine d'interruption
+#define HASOPTOINPUT true       // Pour utiliser la connexion "Moteur Opto-In" pour déterminer l'état d'une valve
 #define HASDS18B20SENSOR true   // Pour le code spécifique au captgeur de température DS18B20
 #define HASHEATING true         // Pour le chauffage du boitier
 #define HASVACUUMSENSOR false   // Un capteur de vide est installé
 #define HASVALVES true          // Des valves sont relié à ce capteur
-#define HASRELAYOUTPUT false    // Un relais SSR peut être relié à ce capteur
+#define HASRELAYOUTPUT true     // Un relais SSR peut être relié à ce capteur
 #define HASUS100THERMISTOR true // Un thermistor est présent pour mesurer la température du boitier US100 robuste
 #define baseSampling 2          // basic sampling interval for main loop. Very slow to avoid echo
                                                 /*Config for RS1, RS2, RS3, RS4, RF2 -> DEVICE_CONF == 3
@@ -132,6 +136,7 @@ String config = "3 -> RS1, RS2, RS3, RS4, RF2"; // String info de configuration
 String config = "4 -> RF1, RC1, RC2"; // String info de configuration
 #define DISTANCESENSOR US100     // Pour compilation conditionnelle du serial handler: US100. MB7389, None
 #define PUMPMOTORDETECT false    // Pour compilation conditionnelle de la routin e d'interruption
+#define HASOPTOINPUT false       // Pour utiliser la connexion "Moteur Opto-In" pour déterminer l'état d'une valve
 #define HASDS18B20SENSOR true    // Pour le code spécifique au captgeur de température DS18B20
 #define HASHEATING true          // Pour le chauffage du boitier
 #define HASVACUUMSENSOR false    // Un capteur de vide est installé
@@ -150,6 +155,7 @@ String config = "4 -> RF1, RC1, RC2"; // String info de configuration
 String config = "5 -> RS5, RS6"; // String info de configuration
 #define DISTANCESENSOR US100     // Pour compilation conditionnelle du serial handler: US100. MB7389, None
 #define PUMPMOTORDETECT false    // Pour compilation conditionnelle de la routin e d'interruption
+#define HASOPTOINPUT false       // Pour utiliser la connexion "Moteur Opto-In" pour déterminer l'état d'une valve
 #define HASDS18B20SENSOR false   // Pour le code spécifique au captgeur de température DS18B20
 #define HASHEATING false         // Pour le chauffage du boitier
 #define HASVACUUMSENSOR false    // Un capteur de vide est installé
@@ -167,6 +173,7 @@ String config = "5 -> RS5, RS6"; // String info de configuration
 String config = "6 -> RHC"; // String info de configuration
 #define DISTANCESENSOR MB7389    // Pour compilation conditionnelle du serial handler: US100. MB7389, None
 #define PUMPMOTORDETECT false    // Pour compilation conditionnelle de la routin e d'interruption
+#define HASOPTOINPUT false       // Pour utiliser la connexion "Moteur Opto-In" pour déterminer l'état d'une valve
 #define HASDS18B20SENSOR true    // Pour le code spécifique au captgeur de température DS18B20
 #define HASHEATING true          // Pour le chauffage du boitier
 #define HASVACUUMSENSOR false    // Un capteur de vide est installé
@@ -183,11 +190,12 @@ String config = "6 -> RHC"; // String info de configuration
 String config = "7 -> VEcTk"; // String info de configuration
 #define DISTANCESENSOR NONE      // Pour compilation conditionnelle du serial handler: US100. MB7389, None
 #define PUMPMOTORDETECT false    // Pour compilation conditionnelle de la routin e d'interruption
+#define HASOPTOINPUT true        // Pour utiliser la connexion "Moteur Opto-In" pour déterminer l'état d'une valve
 #define HASDS18B20SENSOR true    // Pour le code spécifique au captgeur de température DS18B20
 #define HASHEATING true          // Pour le chauffage du boitier
 #define HASVACUUMSENSOR false    // Un capteur de vide est installé
 #define HASVALVES true           // Des valves sont relié à ce capteur
-#define HASRELAYOUTPUT false     // Un relais SSR peut être relié à ce capteur
+#define HASRELAYOUTPUT true      // Un relais SSR peut être relié à ce capteur
 #define HASUS100THERMISTOR false // Un thermistor est présent pour mesurer la température du boitier US100 robuste
 #define baseSampling 1           // basic sampling interval for main loop
                               /*Config for VEcTk -> DEVICE_CONF == 7
@@ -199,6 +207,7 @@ String config = "7 -> VEcTk"; // String info de configuration
 String config = "8 -> Dummy"; // String info de configuration
 #define DISTANCESENSOR NONE      // Pour compilation conditionnelle du serial handler: US100. MB7389, None
 #define PUMPMOTORDETECT false    // Pour compilation conditionnelle de la routin e d'interruption
+#define HASOPTOINPUT false       // Pour utiliser la connexion "Moteur Opto-In" pour déterminer l'état d'une valve
 #define HASDS18B20SENSOR false   // Pour le code spécifique au captgeur de température DS18B20
 #define HASHEATING false         // Pour le chauffage du boitier
 #define HASVACUUMSENSOR false    // Un capteur de vide est installé
@@ -292,6 +301,7 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define evPompe_T2_ONtime 24
 #define evVacPumpOperTimeSec 25
 #define evNeedMaintenance 26
+#define evOptoInState 27
 
 // Table des nom d'événements
 String eventName[] = {
@@ -321,7 +331,8 @@ String eventName[] = {
     "pump/T1_OFFtime",          // Durée d'arrêt de la pompe en millisecondes
     "pump/T2_ONtime",           // Durée de marche de la pompe en millisecondes
     "pump/RunTimeSinceMaint",   // Durée de marche de la pompe entre les entretiens
-    "pump/NeedMaintenance"      // Entretient requis (true or false)
+    "pump/NeedMaintenance",     // Entretient requis (true or false)
+    "optoIn/state"              // Étant actuel de l'entrée opto-in
 };
 
 // Structure définissant un événement
@@ -337,13 +348,13 @@ struct Event
 };
 
 // Variable relié à l'opération du buffer circulaire
-const int buffSize = 90; // Nombre max d'événements que l'on peut sauvegarder
+const int buffSize = 146; // Nombre max d'événements que l'on peut sauvegarder
 retained struct Event eventBuffer[buffSize];
 retained unsigned int buffLen = 0;
 retained unsigned int writePtr = 0;
 retained unsigned int readPtr = 0;
 retained unsigned int replayPtr = 0;
-unsigned int replayBuffLen = 0;
+retained unsigned int replayBuffLen = 0;
 retained unsigned int savedEventCount = 0;
 // struct Event eventBuffer[buffSize];
 // unsigned int buffLen = 0;
@@ -362,11 +373,13 @@ String DeptName = "";
 int RGBled_Red = D0;
 int RGBled_Green = D1;
 int RGBLed_Blue = D2;
-int led = D7;      // Feedback led
-int ssrRelay = D6; // Solid state relay
-int RelayState = false;
-int motorState = A1; // input pour Pompe marche/arrêt
-int heater = D3;     // Contrôle le transistor du chauffage
+int led = D7;          // Feedback led
+int ssrRelay = D6;     // Solid state relay
+int RelayState = HIGH; // Relais initialement à OFF. Son état actif est LOW
+int optoIn = A1;
+int OptoState = false; // input pour Pompe marche/arrêt
+int prevOptoState = false;
+int heater = D3; // Contrôle le transistor du chauffage
 #if HASVACUUMSENSOR
 int VacuumSensor = A0;          // Analogue input pour la mesure du vide
 float VacCalibration = 0;       // Variable contenant la valeur de calibration du capteur.
@@ -481,26 +494,25 @@ void nameHandler(const char *topic, const char *data)
 
 #if PUMPMOTORDETECT
 /*
-  Attach interrupt handler to pin A1 to monitor pump Start/Stop
+  Attach interrupt handler to pin optoIn to monitor pump Start/Stop
 */
-class PumpState_A1
+class PumpState
 {
 public:
-  PumpState_A1()
+  PumpState()
   {
-    pinMode(A1, INPUT);
-    attachInterrupt(A1, &PumpState_A1::A1Handler, this, CHANGE);
+    attachInterrupt(optoIn, &PumpState::optoInHandler, this, CHANGE);
   }
-  void A1Handler()
+  void optoInHandler()
   {
     // IMPORTANT: Pump is active LOW. Pump is ON when PumpCurrentState == false
     delayMicroseconds(pumpDebounceDelay * 1000);
-    PumpCurrentState = digitalRead(A1);
+    PumpCurrentState = digitalRead(optoIn);
     changeTime = millis();
   }
 };
 
-PumpState_A1 ThePumpState; // Instantiate the class A1State
+PumpState ThePumpState; // Instantiate the class A1State
 #endif
 
 #if HASDS18B20SENSOR
@@ -540,14 +552,15 @@ void setup()
   pinMode(MB7389_pin2, INPUT);
   digitalWrite(led, HIGH); // Mettre le led de status à OFF
   pinMode(ssrRelay, OUTPUT);
+  digitalWrite(ssrRelay, HIGH); // Ouvrir le relais initialemeny
+  pinMode(optoIn, INPUT);
 #if HASHEATING
   pinMode(heater, OUTPUT);
   HeatingPower = 0;                       // Valeur de PWM de chauffage
   analogWrite(heater, HeatingPower, 500); // Désactiver le chauffage
 #endif
-  digitalWrite(ssrRelay, LOW);
 
-  PumpCurrentState = digitalRead(A1);
+  PumpCurrentState = digitalRead(optoIn);
   for (int i = 0; i <= 3; i++)
   {
     pinMode(ValvePos_pin[i], INPUT_PULLUP);
@@ -595,10 +608,11 @@ void setup()
 #if HASUS100THERMISTOR
   Particle.variable("thermistor", TempThermUS100);
 #endif
-
   Particle.variable("relayState", RelayState);
+  Particle.variable("optoState", OptoState);
   Particle.variable("rssi", rssi);
   Particle.variable("myIPaddress", myDeviceIP);
+
   // Fonctions disponible dans le nuage
   Particle.function("relay", toggleRelay);
   Particle.function("set", remoteSet);
@@ -682,7 +696,9 @@ void setup()
   pushToPublishQueue(evPumpEndCycle, 1, millis());
   pushToPublishQueue(evFinDeCoulee, false, millis());
 #endif
-
+#if (DEVICE_CONF == 3 || DEVICE_CONF == 7)
+  pushToPublishQueue(evOptoInState, OptoState, now);
+#endif
   // PhotonWdgs::begin(true, true, TimeoutDelay, TIMER7);
   lastAllPublish = now;
   lastPublish = now;        // Initialise le temps initial de publication
@@ -710,6 +726,14 @@ void loop()
       maxPublishInterval = DefaultPubDelay;
     }
     needMaintenance = OperationTime > pumpRunTimeLimit;
+#endif
+#if (DEVICE_CONF == 3 || DEVICE_CONF == 7)
+    OptoState = readOpto();
+    if (OptoState != prevOptoState)
+    {
+      pushToPublishQueue(evOptoInState, OptoState, millis());
+      prevOptoState = OptoState;
+    }
 #endif
     digitalWrite(led, LOW);                   // Pour indiqué le début de la prise de mesure
     readSelectedSensors(samplingIntervalCnt); //
@@ -1377,7 +1401,7 @@ void VacReadVacuumSensor()
     PumpCurrentState = pumpONstate;
     changeTime = millis();
   }
-  else if (digitalRead(A1) && VacAnalogvalue > -5 && PumpCurrentState == pumpONstate)
+  else if (digitalRead(optoIn) && VacAnalogvalue > -5 && PumpCurrentState == pumpONstate)
   {
     PumpCurrentState = pumpOFFstate;
     changeTime = millis();
@@ -1491,17 +1515,17 @@ int getValvePosition(bool OpenSensor, bool CloseSensor)
 // Active ou désactive le relais SSR
 int toggleRelay(String command)
 {
-  if (command == "on" || command == "1")
+  if (command == "on" || command == "ON" || command == "On" || command == "1")
   {
-    RelayState = HIGH;
+    RelayState = LOW;
     digitalWrite(ssrRelay, RelayState);
     /*Particle.publish("Relais", "on", 60, PRIVATE);*/
     pushToPublishQueue(evRelais, RelayState, millis());
     return 1;
   }
-  else if (command == "off" || command == "0")
+  else if (command == "off" || command == "Off" || command == "OFF" || command == "0")
   {
-    RelayState = LOW;
+    RelayState = HIGH;
     digitalWrite(ssrRelay, RelayState);
     /*Particle.publish("Relais", "off", 60, PRIVATE);*/
     pushToPublishQueue(evRelais, RelayState, millis());
@@ -1511,6 +1535,15 @@ int toggleRelay(String command)
   {
     return -1;
   }
+}
+
+// Read opto-In input
+bool readOpto()
+{
+  // int OptoState = digitalRead(optoIn);
+  bool optoState = !digitalRead(optoIn);
+  Log.info("(readOpto) - opto-in state is: %s", (optoState ? "true" : "false"));
+  return optoState;
 }
 
 // Pour modifier l'interval de publication par défault
