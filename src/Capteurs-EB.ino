@@ -19,7 +19,7 @@ STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.10.0" // Version du firmware du capteur.
+#define FirmwareVersion "1.10.1" // Version du firmware du capteur.
 String F_Date = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; // Date et heure de compilation UTC
@@ -35,7 +35,8 @@ dépendamment de cette configuration.
 */
 
 /********* Choisir la configuration de device à compiler *********/
-#define DEVICE_CONF 7
+#define DEVICE_CONF 3
+
 // Config pour:
 // P1, P2, P3 -> DEVICE_CONF == 0
 // V1, V2, V3 -> DEVICE_CONF == 1
@@ -45,6 +46,7 @@ dépendamment de cette configuration.
 // RS5, RS6 -> DEVICE_CONF == 5
 // RHC -> DEVICE_CONF == 6
 // VEcTk -> DEVICE_CONF == 7
+// Dummy -> DEVICE_CONF == 8
 /*****************************************************************/
 
 #if (DEVICE_CONF == 0)
@@ -698,6 +700,7 @@ void setup()
 #endif
 #if (DEVICE_CONF == 3 || DEVICE_CONF == 7)
   pushToPublishQueue(evOptoInState, OptoState, now);
+  pushToPublishQueue(evRelais, RelayState, now);
 #endif
   // PhotonWdgs::begin(true, true, TimeoutDelay, TIMER7);
   lastAllPublish = now;
@@ -900,6 +903,14 @@ void PublishAll()
 
 #if HASVALVES
     CheckValvePos(true);
+#endif
+
+#if HASOPTOINPUT
+    pushToPublishQueue(evOptoInState, OptoState, now);
+#endif
+
+#if HASRELAYOUTPUT
+    pushToPublishQueue(evRelais, RelayState, millis());
 #endif
 
 #if PUMPMOTORDETECT
@@ -1541,7 +1552,7 @@ int toggleRelay(String command)
 bool readOpto()
 {
   // int OptoState = digitalRead(optoIn);
-  bool optoState = !digitalRead(optoIn);
+  bool optoState = digitalRead(optoIn);
   Log.info("(readOpto) - opto-in state is: %s", (optoState ? "true" : "false"));
   return optoState;
 }
