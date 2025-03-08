@@ -7,6 +7,7 @@
  * Author: Pierre Leboeuf
  * Date: Feb. 2016
  * Rev:  Feb. 2023 -- Compile in deviceOS 1.4.4
+ * Rev:  Mar. 2025 -- Compile in deviceOS 2.3.1
  */
 
 // This #include statement was automatically added by the Particle IDE.
@@ -19,7 +20,7 @@ STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.10.1" // Version du firmware du capteur.
+#define FirmwareVersion "1.10.4" // Version du firmware du capteur.
 String F_Date = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; // Date et heure de compilation UTC
@@ -35,7 +36,7 @@ dépendamment de cette configuration.
 */
 
 /********* Choisir la configuration de device à compiler *********/
-#define DEVICE_CONF 3
+#define DEVICE_CONF 0
 
 // Config pour:
 // P1, P2, P3 -> DEVICE_CONF == 0
@@ -50,20 +51,20 @@ dépendamment de cette configuration.
 /*****************************************************************/
 
 #if (DEVICE_CONF == 0)
-String config = "0 -> P1, P2, P3";  // String info de configuration
-#define DISTANCESENSOR NONE         // Pour compilation conditionnelle du serial handler: US100. MB7389, None
-#define PUMPMOTORDETECT true        // Pour compilation conditionnelle de la routin e d'interruption
-#define HASOPTOINPUT false          // Pour utiliser la connexion "Moteur Opto-In" pour déterminer l'état d'une valve
-#define HASDS18B20SENSOR false      // Pour le code spécifique au captgeur de température DS18B20
-#define HASHEATING false            // Pour le chauffage du boitier
-#define HASVACUUMSENSOR true        // Un capteur de vide est installé
-#define minVacuumChange 0.1         // Changement de 0.1 Po Hg avant publication du niveau de vide
-#define HASVALVES false             // Des valves sont relié à ce capteur
-#define HASRELAYOUTPUT false        // Un relais SSR peut être relié à ce capteur
-#define HASUS100THERMISTOR false    // Un thermistor est présent pour mesurer la température du boitier US100 robuste
-#define baseSampling 1              // basic sampling interval for main loop
-#define pumpMinRunTime 15 * seconde // Ignore cycles where pump is running less than 15 seconds
-#define pumpRunTimeLimit 2 * minute // Maximum pump run time before a warning is issued
+String config = "0 -> P1, P2, P3";   // String info de configuration
+#define DISTANCESENSOR NONE          // Pour compilation conditionnelle du serial handler: US100. MB7389, None
+#define PUMPMOTORDETECT true         // Pour compilation conditionnelle de la routin e d'interruption
+#define HASOPTOINPUT false           // Pour utiliser la connexion "Moteur Opto-In" pour déterminer l'état d'une valve
+#define HASDS18B20SENSOR false       // Pour le code spécifique au captgeur de température DS18B20
+#define HASHEATING false             // Pour le chauffage du boitier
+#define HASVACUUMSENSOR true         // Un capteur de vide est installé
+#define minVacuumChange 0.1          // Changement de 0.1 Po Hg avant publication du niveau de vide
+#define HASVALVES false              // Des valves sont relié à ce capteur
+#define HASRELAYOUTPUT false         // Un relais SSR peut être relié à ce capteur
+#define HASUS100THERMISTOR false     // Un thermistor est présent pour mesurer la température du boitier US100 robuste
+#define baseSampling 1               // basic sampling interval for main loop
+#define pumpMinRunTime 15 * seconde  // Ignore cycles where pump is running less than 15 seconds
+#define pumpRunTimeLimit 10 * minute // Maximum pump run time before a warning is issued
 /*Config for P1, P2, P3 -> DEVICE_CONF == 0
 DEVICE   DISTANCESENSOR  PUMPMOTORDETECT HASDS18B20SENSOR HASHEATING HASVACUUMSENSOR HASVALVES HASRELAYOUTPUT HASUS100THERMISTOR
 P1        None            true            false            false      true            false     false          false
@@ -248,8 +249,8 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define fastSampling 6000UL             // in milliseconds
 #define slowSampling 10000UL            // in milliseconds
 #define numReadings 10                  // Number of readings to average for filtering
-#define minDistChange 2.0 * numReadings // Minimum change in distance to publish an event (1/16")
-#define minTempChange 0.5 * numReadings // Minimum temperature change to publish an event
+#define minDistChange 4.0 * numReadings // Minimum change in distance to publish an event (1/16")
+#define minTempChange 1.0 * numReadings // Minimum temperature change to publish an event
 #define minVacuumForCoulee -5.0         // Minimum value a vacuum required to consider a pump operation as beginning a coulee
 #define maxRangeUS100 3000              // Distance maximale valide pour le captgeur
 #define maxRangeMB7389 1900             // Distance maximale valide pour le captgeur
@@ -632,6 +633,7 @@ void setup()
   Log.info("Configuration du wifi... ");
   WiFi.setCredentials("BoilerHouse", "Station Shefford");
   WiFi.setCredentials("PumpHouse", "Station Laporte");
+  WiFi.setCredentials("Tank-Extension", "TankExtension");
   Log.info("Connexion au wifi... ");
   WiFi.connect();
 
@@ -722,7 +724,7 @@ void loop()
     {
       OperationTime++;
       TotalOperationTime++;
-      maxPublishInterval = 1; // publish time every minutes when pump is ON
+      maxPublishInterval = 2; // publish time every 2 minutes when vacuum pump is ON
     }
     else
     {
@@ -926,7 +928,7 @@ void PublishAll()
       if (dutyCycle < 0.005)
       {
         dutyCycle = 0;
-      }                // Mettre à zéro si inférieur à 0.5%
+      } // Mettre à zéro si inférieur à 0.5%
 #if (DEVICE_CONF == 0) // Événement pour les pompes P1 ,P2 et P3 seulement
       pushToPublishQueue(evCurrentDutyCycle, (int)(dutyCycle * 1000), now);
 #endif
@@ -1124,7 +1126,7 @@ void ReadDistance_US100()
       dist_mm = AvgDistReading(currentReading); // Average the distance readings
       Log.info("(ReadDistance_US100) - Dist.: %dmm, lastPublish= %lu, RSSI= %d", (int)(dist_mm / numReadings), lastPublish, rssi);
       if (abs(dist_mm - prev_dist_mm) > minDistChange)
-      {                    // Publish event in case of a change in temperature
+      {                    // Publish event in case of a change in tank level
         lastPublish = now; // reset the max publish delay counter.
         pushToPublishQueue(evDistance, (int)(dist_mm / numReadings), now);
         prev_dist_mm = dist_mm;
@@ -1451,7 +1453,7 @@ double VacRaw2kPa(int raw, double calibration)
   double Vout = Vref * (raw + calibration) * (R1 + R2) / (4096UL * R2); // Vout = Vref*Vraw*(r1_+r2_)/(4096*r2_)
   double Vac_kpa = (Vout - (Vs - 0.92)) / (Vs * K_fact);                // Vac_kpa = (Vout-(Vs-0,92))/(Vs*k)
   double Vac_inHg = Vac_kpa * 0.2953001;
-  /*Log.info("(VacRaw2kPa) - Vout= %f, Vac_kpa= %f, Vac_inHg= %f", Vout, Vac_kpa, Vac_inHg);*/
+  Log.info("(VacRaw2kPa) - Vout= %f, Vac_kpa= %f, Vac_inHg= %f", Vout, Vac_kpa, Vac_inHg);
   return Vac_inHg; // multiplie par 0.295301 pour avoir la valeur en Hg
 }
 #endif
@@ -1526,7 +1528,7 @@ int getValvePosition(bool OpenSensor, bool CloseSensor)
 // Active ou désactive le relais SSR
 int toggleRelay(String command)
 {
-  if (command == "on" || command == "ON" || command == "On" || command == "1")
+  if (command.toLowerCase() == "on" || command == "1")
   {
     RelayState = LOW;
     digitalWrite(ssrRelay, RelayState);
@@ -1534,7 +1536,7 @@ int toggleRelay(String command)
     pushToPublishQueue(evRelais, RelayState, millis());
     return 1;
   }
-  else if (command == "off" || command == "Off" || command == "OFF" || command == "0")
+  else if (command.toLowerCase() == "off" || command == "0")
   {
     RelayState = HIGH;
     digitalWrite(ssrRelay, RelayState);
@@ -1580,6 +1582,7 @@ int remoteSet(String command)
     if (newInterval > 0)
     {
       maxPublishInterval = data.toInt();
+      maxPubDelay_ms = maxPublishInterval * minute;
       Log.info("(remoteSet) - Now publishing at %d minutes interval", maxPublishInterval);
       return 0;
     }
