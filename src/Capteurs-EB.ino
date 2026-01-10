@@ -36,7 +36,7 @@ dépendamment de cette configuration.
 */
 
 /********* Choisir la configuration de device à compiler *********/
-#define DEVICE_CONF 0
+#define DEVICE_CONF 1
 
 // Config pour:
 // P1, P2, P3 -> DEVICE_CONF == 0
@@ -631,6 +631,8 @@ void setup()
 #endif
 
   Log.info("Configuration du wifi... ");
+
+  WiFi.setCredentials("BoilerHouse2", "StationShefford");
   WiFi.setCredentials("BoilerHouse", "Station Shefford");
   WiFi.setCredentials("PumpHouse", "Station Laporte");
   WiFi.setCredentials("Tank-Extension", "TankExtension");
@@ -1453,7 +1455,7 @@ double VacRaw2kPa(int raw, double calibration)
   double Vout = Vref * (raw + calibration) * (R1 + R2) / (4096UL * R2); // Vout = Vref*Vraw*(r1_+r2_)/(4096*r2_)
   double Vac_kpa = (Vout - (Vs - 0.92)) / (Vs * K_fact);                // Vac_kpa = (Vout-(Vs-0,92))/(Vs*k)
   double Vac_inHg = Vac_kpa * 0.2953001;
-  Log.info("(VacRaw2kPa) - Vout= %f, Vac_kpa= %f, Vac_inHg= %f", Vout, Vac_kpa, Vac_inHg);
+  // Log.info("(VacRaw2kPa) - Vout= %f, Vac_kpa= %f, Vac_inHg= %f", Vout, Vac_kpa, Vac_inHg);
   return Vac_inHg; // multiplie par 0.295301 pour avoir la valeur en Hg
 }
 #endif
