@@ -8,6 +8,7 @@
  * Date: Feb. 2016
  * Rev:  Feb. 2023 -- Compile in deviceOS 1.4.4
  * Rev:  Mar. 2025 -- Compile in deviceOS 2.3.1
+ * Rev:  Jan. 2026 -- Add a new wifi credencial
  */
 
 // This #include statement was automatically added by the Particle IDE.
@@ -20,7 +21,7 @@ STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.10.4" // Version du firmware du capteur.
+#define FirmwareVersion "1.10.5" // Version du firmware du capteur.
 String F_Date = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; // Date et heure de compilation UTC
