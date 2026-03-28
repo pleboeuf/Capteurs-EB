@@ -21,7 +21,7 @@ STARTUP(System.enableFeature(FEATURE_RETAINED_MEMORY));
 SYSTEM_THREAD(ENABLED);
 
 // Firmware version et date
-#define FirmwareVersion "1.10.5" // Version du firmware du capteur.
+#define FirmwareVersion "1.10.6" // Version du firmware du capteur.
 String F_Date = __DATE__;
 String F_Time = __TIME__;
 String FirmwareDate = F_Date + " " + F_Time; // Date et heure de compilation UTC
@@ -29,6 +29,7 @@ String FirmwareDate = F_Date + " " + F_Time; // Date et heure de compilation UTC
 #define NONE 0
 #define US100 1
 #define MB7389 2
+#define second 1000UL
 
 /*
 Paramètres de compilation conditionnelle. Le programme qui suit est le même pour tous les devices.
@@ -37,7 +38,7 @@ dépendamment de cette configuration.
 */
 
 /********* Choisir la configuration de device à compiler *********/
-#define DEVICE_CONF 1
+#define DEVICE_CONF 0
 
 // Config pour:
 // P1, P2, P3 -> DEVICE_CONF == 0
@@ -249,6 +250,7 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define pumpDebounceDelay 50            // Debounce time in milliseconds for pump mechanical start/stop switch
 #define fastSampling 6000UL             // in milliseconds
 #define slowSampling 10000UL            // in milliseconds
+#define fourTimesAday 21600UL           // in seconds
 #define numReadings 10                  // Number of readings to average for filtering
 #define minDistChange 4.0 * numReadings // Minimum change in distance to publish an event (1/16")
 #define minTempChange 1.0 * numReadings // Minimum temperature change to publish an event
@@ -622,6 +624,7 @@ void setup()
   Particle.function("set", remoteSet);
   Particle.function("reset", remoteReset);
   Particle.function("replay", replayEvent);
+  // Particle.function("vitals", Particle.publishVitals());
 
 #if DISTANCESENSOR == MB7389
   //   Serial1.halfduplex(true); // Ce capteur envoie seulement des données sésie dans une seule direction
@@ -692,6 +695,9 @@ void setup()
   Time.zone(-5);
   Time.setFormat(TIME_FORMAT_ISO8601_FULL);
   Particle.syncTime();
+
+  // Publish vitals every 6h to have a trace of life even if the device is not rebooted for a long time
+  Particle.publishVitals(fourTimesAday);
 
   unsigned long now = millis();
   pushToPublishQueue(evBootTimestamp, 0, now);
@@ -1742,6 +1748,11 @@ struct Event peekEvent(uint16_t peekReadPtr)
   return thisEvent;
 }
 
+// int publishVitalsNow()
+// {
+//   Particle.publishVitals();
+//   return 0;
+// }
 // Permet de demander un replay des événements manquants
 // Initialise les paramètres pour la routine replayQueuedEvents()
 // Format de la string de command: "Target SN, Target generation Id"
