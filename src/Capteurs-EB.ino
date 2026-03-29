@@ -250,7 +250,7 @@ bool hasUs100Thermistor = HASUS100THERMISTOR;
 #define pumpDebounceDelay 50            // Debounce time in milliseconds for pump mechanical start/stop switch
 #define fastSampling 6000UL             // in milliseconds
 #define slowSampling 10000UL            // in milliseconds
-#define fourTimesAday 21600UL           // in seconds
+#define everyHour 3600L                 // in seconds
 #define numReadings 10                  // Number of readings to average for filtering
 #define minDistChange 4.0 * numReadings // Minimum change in distance to publish an event (1/16")
 #define minTempChange 1.0 * numReadings // Minimum temperature change to publish an event
@@ -697,7 +697,7 @@ void setup()
   Particle.syncTime();
 
   // Publish vitals every 6h to have a trace of life even if the device is not rebooted for a long time
-  Particle.publishVitals(fourTimesAday);
+  Particle.publishVitals(everyHour);
 
   unsigned long now = millis();
   pushToPublishQueue(evBootTimestamp, 0, now);
